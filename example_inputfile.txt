@@ -1,0 +1,18 @@
+[keys]
+title: Example File
+root: ./lorem_ipsum
+[book]
+::Chapter1.txt
+::Chapter2.txt
+::Chapter3.txt
+::Chapter4.txt
+::Chapter5.txt
+::Chapter6.txt
+::Chapter7.txt
+::Chapter8.txt
+::Chapter9.txt
+::Chapter10.txt
+::Chapter11.txt
+::Chapter12.txt
+::Chapter13.txt
+::Chapter14.txt
