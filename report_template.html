@@ -41,6 +41,9 @@
 
         th {
             background-color: lightgray;
+        }
+
+        .sortable {
             cursor: pointer;
         }
     </style>
@@ -55,10 +58,10 @@
     <table id="word-count-table">
         <tr>
             <!--When a header is clicked, run the sortTable function, with a parameter, 0 for sorting by names, 1 for sorting by country:-->
-            <th onclick="sortTable(0)">#</th>
-            <th onclick="sortTable(1)">Name</th>
+            <th class="sortable" onclick="sortTable(0)">#</th>
+            <th class="sortable" onclick="sortTable(1)">Name</th>
             <th>File</th>
-            <th onclick="sortTable(3)">Word Count</th>
+            <th class="sortable" onclick="sortTable(3)">Word Count</th>
         </tr>
     </table>
 
