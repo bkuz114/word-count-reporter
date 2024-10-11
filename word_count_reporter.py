@@ -59,7 +59,7 @@ def main(args):
     # 2:48
 
     report = make_report(title, input_data, output, args.FORCE)
-    print("File written: " + report)
+    print(report)
     webbrowser.open(report)
 
 
