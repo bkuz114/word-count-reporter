@@ -168,29 +168,29 @@ def generate_report(title, word_count_info, outfile, includepaths, force):
     return outfile
 
 
+'''
+takes a filepath on the filesystem
+and returns a string that will open
+it in the browser. i.e.
+file:///C:/Users/Boris/file.txt
+'''
+
+
+def file_url(filepath):
+    filestr = filepath.replace("\\", "/")
+    filestr = "file:///" + filestr
+    return filestr
+
+
 def word_count_row(file_info, includepaths, row_id=None):
-    soup = BeautifulSoup("", 'html.parser')
-
-    row_attrs = {}
-    if row_id:
-        row_attrs['id'] = row_id
-    new_row = soup.new_tag('tr', attrs=row_attrs)
-
-    filename_cell = soup.new_tag("td")
-    filename_cell.string = file_info[0]
-
-    filepath_cell = soup.new_tag("td")
-    filepath_cell.string = file_info[1]
-
-    wc_cell = soup.new_tag("td")
-    wc_cell.string = str(file_info[2]) + " words"
-
-    new_row.append(filename_cell)
-    if includepaths:
-        new_row.append(filepath_cell)
-    new_row.append(wc_cell)
-
-    return new_row
+    return BeautifulSoup('''<tr id={}>
+                         <td>{}</td>
+                         <td><a href="{}" target=_blank>file</a></td>
+                         <td>{} words</td>
+                         </tr>'''
+                         .format(row_id, file_info[0],
+                                 file_url(file_info[1]),
+                                 file_info[2]), 'html.parser')
 
 
 def word_count_docx(filepath):
