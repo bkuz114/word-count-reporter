@@ -188,6 +188,10 @@ def table_header():
                          </tr>''', 'html.parser')
 
 
+def number(numstr):
+    return f'{numstr:,}'
+
+
 def word_count_row(file_info, includepaths):
     return BeautifulSoup('''<tr>
                          <td>{}</td>
@@ -196,7 +200,7 @@ def word_count_row(file_info, includepaths):
                          </tr>'''
                          .format(file_info[0],
                                  file_url(file_info[1]),
-                                 file_info[2]), 'html.parser')
+                                 number(file_info[2])), 'html.parser')
 
 
 def total_row(total):
@@ -204,7 +208,7 @@ def total_row(total):
                          <td colspan="2">Total</td>
                          <td>{}</td>
                          </tr>'''
-                         .format(total), 'html.parser')
+                         .format(number(total)), 'html.parser')
 
 
 def word_count_docx(filepath):
