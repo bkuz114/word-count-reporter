@@ -157,8 +157,8 @@ def generate_report(title, word_count_info, outfile, includepaths, force):
     table = soup.find(attrs={'id': 'word-count-table'})
 
     total_words = 0
-    for count_info in word_count_info:
-        table.append(word_count_row(count_info, includepaths))
+    for idx, count_info in enumerate(word_count_info):
+        table.append(word_count_row(count_info, idx+1, includepaths))
         total_words += count_info[2]
     table.append(total_row(total_words))
 
@@ -185,20 +185,21 @@ def number(numstr):
     return f'{numstr:,}'
 
 
-def word_count_row(file_info, includepaths):
+def word_count_row(file_info, row_num, includepaths):
     return BeautifulSoup('''<tr>
+                         <td>{}</td>
                          <td>{}</td>
                          <td><a href="{}" target=_blank>file</a></td>
                          <td>{} words</td>
                          </tr>'''
-                         .format(file_info[0],
+                         .format(file_info[0], row_num,
                                  file_url(file_info[1]),
                                  number(file_info[2])), 'html.parser')
 
 
 def total_row(total):
     return BeautifulSoup('''<tr id="total">
-                         <td colspan="2">Total</td>
+                         <td colspan="3">Total</td>
                          <td>{}</td>
                          </tr>'''
                          .format(number(total)), 'html.parser')
