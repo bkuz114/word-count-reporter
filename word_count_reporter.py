@@ -187,7 +187,7 @@ def word_count_row(file_info, row_num):
                          <td><a href="{}" target=_blank>file</a></td>
                          <td>{} words</td>
                          </tr>'''
-                         .format(file_info[0], row_num,
+                         .format(row_num, file_info[0],
                                  file_url(file_info[1]),
                                  number(file_info[2])), 'html.parser')
 

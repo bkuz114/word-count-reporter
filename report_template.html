@@ -55,8 +55,8 @@
     <table id="word-count-table">
         <tr>
             <!--When a header is clicked, run the sortTable function, with a parameter, 0 for sorting by names, 1 for sorting by country:-->
-            <th onclick="sortTable(0)">Name</th>
-            <th onclick="sortTable(1)">#</th>
+            <th onclick="sortTable(0)">#</th>
+            <th onclick="sortTable(1)">Name</th>
             <th>File</th>
             <th onclick="sortTable(3)">Word Count</th>
         </tr>
@@ -123,9 +123,9 @@
                     y = rows[i + 1].getElementsByTagName("td")[n];
                     /*check if the two rows should switch place,
                     based on the direction, asc or desc:*/
-                    if (n == 0) {
+                    if (n == 1) {
                         shouldSwitch = sort_str(x, y, dir);
-                    } else if (n == 1 || n == 3) {
+                    } else if (n == 0 || n == 3) {
                         shouldSwitch = sort_wc(x, y, dir);
                     }
                     if (shouldSwitch) {
