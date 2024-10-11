@@ -30,10 +30,6 @@ def main(args):
                         action="store_true",
                         default=False,
                         help='Overwrite output file if exists')
-    parser.add_argument('--includepaths', required=False,
-                        action="store_true",
-                        default=False,
-                        help='Include filepaths in the report.')
     args = parser.parse_args(args)
 
     ifile = args.input
@@ -62,8 +58,7 @@ def main(args):
     # 2:40 pm 10/10/24
     # 2:48
 
-    report = make_report(title, input_data, output, args.includepaths,
-                         args.FORCE)
+    report = make_report(title, input_data, output, args.FORCE)
     print("File written: " + report)
     webbrowser.open(report)
 
@@ -80,10 +75,10 @@ def parse_input_file(filepath):
     return title, my_data
 
 
-def make_report(title, file_info_list, outfile, includepaths, force):
+def make_report(title, file_info_list, outfile, force):
     for file_info in file_info_list:
         file_info.append(file_word_count(file_info[1]))
-    return generate_report(title, file_info_list, outfile, includepaths, force)
+    return generate_report(title, file_info_list, outfile, force)
 
 
 ''' date string with no spaces for timestamping files '''
@@ -142,7 +137,7 @@ def write_file(filepath, data, force):
     wr.close()
 
 
-def generate_report(title, word_count_info, outfile, includepaths, force):
+def generate_report(title, word_count_info, outfile, force):
 
     date = date_string()
 
@@ -158,7 +153,7 @@ def generate_report(title, word_count_info, outfile, includepaths, force):
 
     total_words = 0
     for idx, count_info in enumerate(word_count_info):
-        table.append(word_count_row(count_info, idx+1, includepaths))
+        table.append(word_count_row(count_info, idx+1))
         total_words += count_info[2]
     table.append(total_row(total_words))
 
@@ -185,7 +180,7 @@ def number(numstr):
     return f'{numstr:,}'
 
 
-def word_count_row(file_info, row_num, includepaths):
+def word_count_row(file_info, row_num):
     return BeautifulSoup('''<tr>
                          <td>{}</td>
                          <td>{}</td>
