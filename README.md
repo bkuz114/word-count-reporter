@@ -4,9 +4,12 @@
 
 # Quickstart
 
-## Install beautifulsoup:
+## Install python dependencies
 
-`pip install beautifulsoup4`
+```
+pip install beautifulsoup4
+pip install-docx
+```
 
 Or, do so in a virtual env:
 

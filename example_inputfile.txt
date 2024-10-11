@@ -2,6 +2,7 @@
 title: Example File
 root: ./lorem_ipsum
 [book]
+::test.docx
 ::Chapter1.txt
 ::Chapter2.txt
 ::Chapter3.txt

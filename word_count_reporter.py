@@ -1,4 +1,5 @@
 from datetime import datetime as dt
+from docx import Document
 import webbrowser
 import sys
 import os
@@ -179,19 +180,40 @@ def word_count_row(file_info, includepaths):
     return new_row
 
 
+def word_count_docx(filepath):
+    document = Document(filepath)
+    num_words = 0
+    for paragraph in document.paragraphs:
+        words = paragraph.text.split()
+        num_words += len(words)
+    return num_words
+
+
+def word_count_txt(filepath):
+    num_words = 0
+    with open(filepath, 'r') as f:
+        for line in f:
+            words = line.split()
+            num_words += len(words)
+    return num_words
+
+
 def file_word_count(filepath):
 
     if not os.path.exists(filepath):
         raise Exception("File {} does not exist!"
                         .format(filepath))
 
-    num_words = 0
-
-    with open(filepath, 'r') as f:
-        for line in f:
-            words = line.split()
-            num_words += len(words)
-    return num_words
+    extension = os.path.splitext(filepath)[1]
+    if extension == ".txt":
+        return word_count_txt(filepath)
+    if extension == ".docx":
+        return word_count_docx(filepath)
+    else:
+        raise Exception("invalid filetype {}. "
+                        "Only .txt and .docx "
+                        "currently supported"
+                        .format(extension))
 
 
 if __name__ == "__main__":
