@@ -8,6 +8,7 @@ import inputfile
 from bs4 import BeautifulSoup
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+REPORT_DIR = "C:\\Users\\Boris\\Documents\\programming\\git repos\\word-count-reporter\\reports"
 ENC = 'utf-8'
 
 
@@ -18,8 +19,10 @@ def main(args):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-i', '--input', required=True,
                         help="Input file")
-    parser.add_argument('-o', '--output', default="report.html",
-                        help='Output file.', required=False)
+    parser.add_argument('-o', '--output',
+                        help="""Output file. If not supplied,
+                        will be based on title and timestamp""",
+                        required=False)
     parser.add_argument('-t', '--notimestamp', required=False,
                         action="store_true",
                         help="Don't timestamp output file")
@@ -40,23 +43,27 @@ def main(args):
     if not os.path.isabs(ifile):
         ifile = os.path.abspath(os.path.join(SCRIPT_DIR, ifile))
 
+    # parse the input file
+    title, input_data = parse_input_file(ifile)
+
     # output
     output = args.output
-    if not os.path.isabs(args.output):
+    if not output:
+        report_basedir = os.path.join(REPORT_DIR, title)
+        filename = title.replace(" ", "_") + "-word-count-report"
+        if not args.notimestamp:
+            ts = timestamp()
+            filename += "_" + ts
+        filename += ".html"
+        output = os.path.join(report_basedir, filename)
+    if not os.path.isabs(output):
         output = os.path.abspath(os.path.join(SCRIPT_DIR, args.output))
-
-    filename = os.path.basename(output)
-    if filename == "report.html" and not args.notimestamp:
-        filedir = os.path.dirname(output)
-        basename = os.path.splitext(os.path.basename(filename))[0]
-        ts = timestamp()
-        basename = basename + "_" + ts + ".html"
-        output = os.path.join(filedir, basename)
 
     # 2:40 pm 10/10/24
     # 2:48
 
-    report = make_report(ifile, output, args.includepaths, args.FORCE)
+    report = make_report(title, input_data, output, args.includepaths,
+                         args.FORCE)
     print("File written: " + report)
     webbrowser.open(report)
 
@@ -73,8 +80,7 @@ def parse_input_file(filepath):
     return title, my_data
 
 
-def make_report(filepath, outfile, includepaths, force):
-    title, file_info_list = parse_input_file(filepath)
+def make_report(title, file_info_list, outfile, includepaths, force):
     for file_info in file_info_list:
         file_info.append(file_word_count(file_info[1]))
     return generate_report(title, file_info_list, outfile, includepaths, force)
