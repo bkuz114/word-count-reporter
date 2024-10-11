@@ -4,7 +4,7 @@
     <title>%title% word counrt report</title>
     <style>
         body {
-            background: lightblue;
+            background: lemonchiffon;
         }
 
         #header {
@@ -25,6 +25,7 @@
             margin-right: auto;
             font-size: 20px;
             border-collapse: collapse;
+            background-color: white;
         }
 
         #total {
@@ -40,6 +41,7 @@
 
         th {
             background-color: lightgray;
+            cursor: pointer;
         }
     </style>
 
@@ -55,13 +57,13 @@
             <!--When a header is clicked, run the sortTable function, with a parameter, 0 for sorting by names, 1 for sorting by country:-->
             <th onclick="sortTable(0)">Name</th>
             <th>File</th>
-            <th onclick="sortTable(2)">Country</th>
+            <th onclick="sortTable(2)">Word Count</th>
         </tr>
     </table>
 
     <script>
         /**
-		 * based on:
+         * based on:
          * https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_sort_table_desc
          * https://www.w3schools.com/howto/howto_js_sort_table.asp
          */
