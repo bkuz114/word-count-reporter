@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="icon" href="./favicon.ico">
+    <style>
+        body {
+            background-color: dodgerblue;
+            font-size: 20px;
+            padding: 5px 0px 0px 15px;
+        }
+
+        input {
+            font-size: 20px;
+        }
+
+        #wrapper {
+            padding-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Select input file to generate report from.</h1>
+
+    <div id="wrapper">
+        <form action="upload.php" method="post" enctype="multipart/form-data">
+            <input type="file" name="fileToUpload" id="fileToUpload">
+            <input type="submit" value="Generate Report" name="submit" id="submit" disabled>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("fileToUpload").onchange = function() {
+            document.getElementById("submit").disabled = false;
+        };
+    </script>
+</body>
+
+</html>
