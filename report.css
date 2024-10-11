@@ -22,7 +22,12 @@ body {
     border-collapse: collapse;
 }
 
+#total {
+    font-weight: bold;
+    background-color: lightgray;
+}
+
 td {
-	padding: 2px;
+    padding: 2px;
     border: 1px solid black;
 }
