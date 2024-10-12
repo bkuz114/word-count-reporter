@@ -1,58 +1,113 @@
 <?php
-$target_file = "tmpfile.txt";  // rel this script
-$uploadOk = 1;
-$txtFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+$tmp_file = "tmpfile.txt";  // rel this script
+$report_path = "";
+$txtFileType = strtolower(pathinfo($tmp_file, PATHINFO_EXTENSION));
 
-// Check if txt file is a actual txt or fake txt
-if (isset($_POST["submit"])) {
-    $check = filesize($_FILES["fileToUpload"]["tmp_name"]);
-    if ($check !== false) {
-        echo "File is a txt - $check.";
-        $uploadOk = 1;
-    } else {
-        echo "File is not an txt.";
-        $uploadOk = 0;
-    }
+$failures = array();
+
+check_txt();
+check_exists();
+check_size();
+check_format();
+if (count($failures) === 0) {
+	run_report();
 }
 
-// Check if file already exists
-if (file_exists($target_file)) {
-    echo "Sorry, file already exists.";
-    $uploadOk = 0;
-}
-
-// Check file size
-if ($_FILES["fileToUpload"]["size"] > 500000) {
-    echo "Sorry, your file is too large.";
-    $uploadOk = 0;
-}
-
-// Allow certain file formats
-if ($txtFileType != "txt") {
-    echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
-    $uploadOk = 0;
-}
-
-// Check if $uploadOk is set to 0 by an error
-if ($uploadOk == 0) {
-    echo "Sorry, your file was not uploaded.";
-    // if everything is ok, try to upload file
+$result = '<div id="result">';
+if (count($failures) === 0) {
+	$result .= '<div class="success">
+					<h1>Success! Report generated at:</h1>
+					<br>
+					<h2>'.$report_path.'</h2>
+				</div>';
 } else {
-    if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
-        echo "The file ". htmlspecialchars(basename($_FILES["fileToUpload"]["name"])). " has been uploaded @ $target_file.";
+	$result .= '<div class="failed">
+					<h1>Failed! Failure reasons:</h1>
+				<ul>';
+	foreach ($failures as $x) {
+  		$result .= "<li class='failure-messages'>$x</li>";
+	}
+	$result .= "</ul></div>";
+}
+$result .= "</div>";
+
+echo '
+<html>
+<head>
+	<title>Result</title>
+	<style>
+		body {
+			background-color: gold;
+		}
+		#result {
+			font-size: 18px;
+			padding: 15px;
+		}
+		.failed {
+			color: red;
+		}
+	</style>
+</head>
+<body>
+	<h1>Result:</h1>
+'.$result.'
+</body>
+</html>';
+
+function check_txt() {
+	global $failures;
+	// Check if txt file is a actual txt or fake txt
+	if (isset($_POST["submit"])) {
+    	$check = filesize($_FILES["fileToUpload"]["tmp_name"]);
+    	if ($check == false) {
+        	$failures[] = "File is not an txt.";
+    	}
+	}
+}
+
+function check_exists() {
+	global $failures;
+	global $tmp_file;
+	// Check if file already exists
+	if (file_exists($tmp_file)) {
+    	$failures[] = "Sorry, file $tmp_file already exists.";
+	}
+}
+
+function check_size() {
+	global $failures;
+	// Check file size
+	if ($_FILES["fileToUpload"]["size"] > 500000) {
+    	$failures[] = "Sorry, your file is too large.";
+	}
+}
+
+function check_format() {
+	global $failures;
+	global $txtFileType;
+	// Allow certain file formats
+	if ($txtFileType != "txt") {
+    	$failures[] = "Sorry, only txt files are allowed.";
+	}
+}
+
+function run_report() {
+	global $failures;
+	global $tmp_file;
+	global $report_path;
+    if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $tmp_file)) {
         // call the python script
-        exec("python word_count_reporter.py -i $target_file 2>&1", $output, $retval);
-        echo "\nCalled python";
-        var_dump($output);
-        if ($retval != 0) {
-            echo "\nEncountered error code $retval when calling python";
+		exec("python word_count_reporter.py -i $tmp_file --output report.html -F 2>&1", $output, $retval);
+		if ($retval == 0) {
+			$report_path = $output[0]; // path to report should be only output
+		} else {
+            $failures[] = "\nEncountered error code $retval when calling python. Error: ".var_export($output, true);
         }
 
         // delete the tmp file
-        unlink($target_file);
-        echo "\ndeleted temp file $target_file";
+        unlink($tmp_file);
     } else {
-        echo "Sorry, there was an error uploading your file.";
+        $failures[] = "Sorry, there was an error uploading your file.";
     }
 }
 ?>
