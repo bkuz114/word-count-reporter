@@ -96,8 +96,13 @@ function run_report() {
 	global $tmp_file;
 	global $report_path;
     if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $tmp_file)) {
-        // call the python script
-		exec("python word_count_reporter.py -i $tmp_file 2>&1", $output, $retval);
+	    // call the python script
+	    $pycall = "python word_count_reporter.py -i $tmp_file --usetitle";
+	    if (isset($_POST["backup"])) {
+	        $pycall .= " --backup";
+	    }
+	    $pycall .= " 2>&1";
+	    exec($pycall, $output, $retval);
 		if ($retval == 0) {
 			$report_path = $output[0]; // path to report should be only output
 		} else {

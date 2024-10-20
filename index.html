@@ -17,6 +17,10 @@
         #wrapper {
             padding-top: 20px;
         }
+
+        #backup {
+            margin-top: 20px;
+        }
     </style>
 </head>
 
@@ -27,6 +31,10 @@
     <div id="wrapper">
         <form action="upload.php" method="post" enctype="multipart/form-data">
             <input type="file" name="fileToUpload" id="fileToUpload">
+            <br>
+            <label for="backup">Back up files</label>
+            <input type="checkbox" name="backup" id="backup">
+            <br><br>
             <input type="submit" value="Generate Report" name="submit" id="submit" disabled>
         </form>
     </div>

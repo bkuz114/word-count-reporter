@@ -1,11 +1,14 @@
 from datetime import datetime as dt
 from docx import Document
+from bs4 import BeautifulSoup
 import webbrowser
 import sys
 import os
 import argparse
 import inputfile
-from bs4 import BeautifulSoup
+import shutil
+import logging
+logger = logging.getLogger(__name__)
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 REPORT_DIR = "C:\\Users\\Boris\\Documents\\programming\\git repos\\word-count-reporter\\reports"
@@ -23,14 +26,45 @@ def main(args):
                         help="""Output file. If not supplied,
                         will be based on title and timestamp""",
                         required=False)
+    parser.add_argument('-b', '--backup', required=False,
+                        action="store_true",
+                        help="Backup input files as text files in the same "
+                             "directory holding the report. Notes: "
+                             "(1) if any of the files are .docx files, will "
+                             "convert them to text files; .txt files will be "
+                             "backed up as is; other file type not supported."
+                             " (2) if --backup and --output both given, "
+                             "then --output should be the directory for both "
+                             "the report and the backed up "
+                             "files, NOT the path to the report itself.")
     parser.add_argument('-t', '--notimestamp', required=False,
                         action="store_true",
                         help="Don't timestamp output file")
+    parser.add_argument('-u', '--usetitle', required=False,
+                        action="store_true",
+                        help="When --output not given, use the project's "
+                             "title in filename generated for the report.")
+    parser.add_argument('--loglevel', default="info",
+                        choices=["debug", "info"],
+                        help="Log level.")
     parser.add_argument('-F', '--FORCE', required=False,
                         action="store_true",
                         default=False,
                         help='Overwrite output file if exists')
     args = parser.parse_args(args)
+
+    # a logger for my debugging purposes
+    loglevel = logging.DEBUG
+    if args.loglevel:
+        match args.loglevel:
+            case "debug":
+                loglevel = logging.DEBUG
+            case "info":
+                loglevel = logging.INFO
+    logger.setLevel(loglevel)
+    console = logging.StreamHandler()
+    #console.setFormatter(logging.Formatter('%(name)-12s: %(message)s'))
+    logger.addHandler(console)
 
     ifile = args.input
     if not os.path.exists(ifile):
@@ -40,38 +74,115 @@ def main(args):
         ifile = os.path.abspath(os.path.join(SCRIPT_DIR, ifile))
 
     # parse the input file
+    # note: input_data is array of arrays.
+    # each inner array corresponds to a chapter.
+    # each inner array is [chap name, path to file]
     title, input_data = parse_input_file(ifile)
 
-    # output
-    output = args.output
-    if not output:
-        report_basedir = os.path.join(REPORT_DIR, title)
-        filename = title.replace(" ", "_") + "-word-count-report"
-        if not args.notimestamp:
-            ts = timestamp()
-            filename += "_" + ts
-        filename += ".html"
-        output = os.path.join(report_basedir, filename)
-    if not os.path.isabs(output):
-        output = os.path.abspath(os.path.join(SCRIPT_DIR, args.output))
+    # generic output file and possibly folder
+    # (if --backup, will encorporate a folder)
+
+    generic_filename = "word-count-report"
+    generic_folder = "word_count_w_backup"
+    ts = timestamp()
+    if args.usetitle:
+        safe_title = title.replace(" ", "_")
+        generic_filename = safe_title + "-" + generic_filename
+        generic_folder = safe_title + "-" + generic_folder
+    if not args.notimestamp:
+        generic_filename += "_" + ts
+        generic_folder += "_" + ts
+    generic_filename += ".html"
+
+    # determine report file path, and backup dir if needed
+
+    report_dir = None  # dir to hold the report (and backups)
+    report_filename = None  # name of the report
+
+    if args.output:  # --output arg given
+        root, ext = os.path.splitext(args.output)
+        if args.backup:  # --backup given: --output should be a folder
+            logger.debug("op #1: (--output, --backup)")
+            if ext:
+                raise Exception("\n--output and --backup given, but "
+                                " --output appears to be a file (it has "
+                                "an extension). If you're giving --backup "
+                                "and --output, then --output should specify "
+                                "a FOLDER, which will hold both the report "
+                                "file as well as the backed up files :)")
+            report_dir = args.output
+            report_filename = generic_filename
+        else:  # --backup not given; --output should be a file (the report)
+            logger.debug("op #2: (--output, no --backup)")
+            if not ext:
+                raise Exception("\n\n--output does not appear to be a file")
+            report_dir = os.path.dirname(args.output)
+            report_filename = os.path.basename(args.output)
+    else:  # --output arg not given - use default
+        report_dir = os.path.join(REPORT_DIR, title)
+        report_filename = generic_filename
+        if args.backup:  # if --backup, default report dir should be an extra FOLDER: it will hold backup + report
+            logger.debug("op #3: (no --output, --backup)")
+            report_dir = os.path.join(report_dir, generic_folder)
+
+    # final path to the report
+    report_file = os.path.join(report_dir, report_filename)
+    if not os.path.isabs(report_file):
+        report_dir = os.path.join(SCRIPT_DIR, report_file)
+
+    logger.debug("report dir     : " + report_dir)
+    logger.debug("report filename: " + report_filename)
+    logger.debug("Report file    : " + report_file)
+
+    # if the report dir doesnt exist, create it
+    os.makedirs(report_dir, exist_ok=True)
 
     # 2:40 pm 10/10/24
     # 2:48
 
-    report = make_report(title, input_data, output, args.FORCE)
-    print(report)
+    logger.debug("original input data:")
+    logger.debug(input_data)
+
+    if args.backup:
+        backup_files = backup(input_data, report_dir)
+        new_idata = []
+        logger.debug("loop through and back up files")
+        # zip allows you to loop through 2 lists at once
+        for original, backed_up in zip(input_data, backup_files):
+            new_idata.append([original[0], backed_up])
+        input_data = new_idata
+
+    logger.debug("new input data:")
+    logger.debug(input_data)
+
+    report = make_report(title, input_data, report_file, args.FORCE)
+
+    logger.info(report)
     webbrowser.open(report)
+
+
+'''
+returns 2 items:
+
+    title
+        the title of the project
+    my_data
+        array of arrays.
+        one inner array for each chapter.
+        each inner array is:
+            [chapter name, filepath to chapter]
+'''
 
 
 def parse_input_file(filepath):
     title, file_data, inputfile_had_parts = inputfile.parse_data_file(filepath)
     my_data = []
     for data in file_data:
-        filename = data[1]
-        filepath = data[2]
-        if not filename:
+        filename = data[1]  # chapter name
+        filepath = data[2]  # filepath to chapter
+        if not filename:  # if no chapter name, make it the name of the file
             filename = os.path.basename(filepath)
-        my_data.append([filename, filepath])  # file title, filepath
+        my_data.append([filename, filepath])
     return title, my_data
 
 
@@ -181,6 +292,7 @@ def number(numstr):
 
 
 def word_count_row(file_info, row_num):
+
     return BeautifulSoup('''<tr>
                          <td>{}</td>
                          <td>{}</td>
@@ -234,6 +346,71 @@ def file_word_count(filepath):
                         "Only .txt and .docx "
                         "currently supported"
                         .format(extension))
+
+
+'''
+backs up all the files in files_info,
+and returns a list of filepaths to
+those backed up files, in same order.
+(Note: for each file to back up, if
+the file is .txt, it copies it directly
+to report_dir; if it's .docx, it converts
+it to .txt and copies that to report_dir)
+'''
+
+
+def backup(files_info, report_dir):
+    destfiles = []
+    backup_dir = os.path.join(report_dir, "files")
+    for file_info in files_info:
+        # 'backup' the file and add filepath of
+        # backed up file to destfiles
+        destfiles.append(backup_file(file_info[1],
+                                     file_info[0],
+                                     backup_dir))
+    return destfiles
+
+
+''' backup a file and return path to that backed up file '''
+
+
+def backup_file(chapter_filepath, chapter_name, backup_dir):
+    logger.debug("\n\n*chapter name: {}\n* srcfile: {}\n* dest dir: {}".format(chapter_name, chapter_filepath, backup_dir))
+    extension = os.path.splitext(chapter_filepath)[1]
+    dest_filepath = None
+    if extension == ".docx":
+        filename_no_ext = os.path.splitext(chapter_name)[0]
+        dest_filepath = os.path.join(backup_dir, filename_no_ext + ".txt")
+        docx_to_txt(chapter_filepath, dest_filepath)
+    elif extension == ".txt":
+        filename = os.path.basename(chapter_filepath)
+        dest_filepath = os.path.join(backup_dir, filename)
+        shutil.copyfile(chapter_filepath, dest_filepath)
+    else:
+        raise Exception("file to backup isn't .docx or .txt")
+    logger.debug("\tFile backed up to: " + dest_filepath)
+    return dest_filepath
+
+
+''' convert a .docx file to a .txt file '''
+
+
+def docx_to_txt(srcpath, destpath):
+    if not os.path.exists(srcpath):
+        raise Exception("Trying to convert a docx to txt, but the docx "
+                        " file doesn't exist: {}".format(srcpath))
+    if os.path.exists(destpath):
+        raise Exception("Trying to convert a docx to a text file, "
+                        "but proposed destination path already "
+                        "exists.\n\nsrcfile:{}\ndest path:{}"
+                        .format(srcpath, destpath))
+
+    # need to create parent dir of file writing to or python will error
+    os.makedirs(os.path.dirname(destpath), exist_ok=True)
+    with open(destpath, 'w') as destfile:
+        document = Document(srcpath)
+        for paragraph in document.paragraphs:
+            destfile.write(paragraph.text + "\n")
 
 
 if __name__ == "__main__":
