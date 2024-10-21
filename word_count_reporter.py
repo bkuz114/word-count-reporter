@@ -323,7 +323,7 @@ def word_count_docx(filepath):
 
 def word_count_txt(filepath):
     num_words = 0
-    with open(filepath, 'r') as f:
+    with open(filepath, 'r', encoding=ENC) as f:
         for line in f:
             words = line.split()
             num_words += len(words)
@@ -407,7 +407,7 @@ def docx_to_txt(srcpath, destpath):
 
     # need to create parent dir of file writing to or python will error
     os.makedirs(os.path.dirname(destpath), exist_ok=True)
-    with open(destpath, 'w') as destfile:
+    with open(destpath, 'w', encoding=ENC) as destfile:
         document = Document(srcpath)
         for paragraph in document.paragraphs:
             destfile.write(paragraph.text + "\n")
