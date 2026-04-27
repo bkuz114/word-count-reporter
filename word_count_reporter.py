@@ -186,20 +186,18 @@ def main(args):
     webbrowser.open(report)
 
 
-"""
-returns 2 items:
-
-    title
-        the title of the project
-    my_data
-        array of arrays.
-        one inner array for each chapter.
-        each inner array is:
-            [chapter name, filepath to chapter]
-"""
-
-
 def parse_input_file(filepath):
+    """
+    returns 2 items:
+
+        title
+            the title of the project
+        my_data
+            array of arrays.
+            one inner array for each chapter.
+            each inner array is:
+                [chapter name, filepath to chapter]
+    """
     title, file_data, inputfile_had_parts = inputfile.parse_data_file(filepath)
     my_data = []
     for data in file_data:
@@ -217,21 +215,16 @@ def make_report(title, file_info_list, outfile, force):
     return generate_report(title, file_info_list, outfile, force)
 
 
-""" date string with no spaces for timestamping files """
-
-
 def timestamp():
+    """date string with no spaces for timestamping files"""
     # format the datetime without any spaces
     fmt = "%Y_%m_%d-%H_%M_%S"
     ct = dt.now().strftime(fmt)
     return str(ct)
 
 
-""" human readable/useful date string"""
-
-
 def date_string():
-
+    """human readable/useful date string"""
     date = dt.now()
     formatted_date = date.strftime("%B %d, %Y")
 
@@ -297,15 +290,13 @@ def generate_report(title, word_count_info, outfile, force):
     return outfile
 
 
-"""
-takes a filepath on the filesystem
-and returns a string that will open
-it in the browser. i.e.
-file:///C:/Users/Boris/file.txt
-"""
-
-
 def file_url(filepath):
+    """
+    takes a filepath on the filesystem
+    and returns a string that will open
+    it in the browser. i.e.
+    file:///C:/Users/Boris/file.txt
+    """
     filestr = filepath.replace("\\", "/")
     filestr = "file:///" + filestr
     return filestr
@@ -376,18 +367,16 @@ def file_word_count(filepath):
         )
 
 
-"""
-backs up all the files in files_info,
-and returns a list of filepaths to
-those backed up files, in same order.
-(Note: for each file to back up, if
-the file is .txt, it copies it directly
-to report_dir; if it's .docx, it converts
-it to .txt and copies that to report_dir)
-"""
-
-
 def backup(files_info, report_dir):
+    """
+    backs up all the files in files_info,
+    and returns a list of filepaths to
+    those backed up files, in same order.
+    (Note: for each file to back up, if
+    the file is .txt, it copies it directly
+    to report_dir; if it's .docx, it converts
+    it to .txt and copies that to report_dir)
+    """
     destfiles = []
     backup_dir = os.path.join(report_dir, "files")
     for file_info in files_info:
@@ -397,10 +386,8 @@ def backup(files_info, report_dir):
     return destfiles
 
 
-""" backup a file and return path to that backed up file """
-
-
 def backup_file(chapter_filepath, chapter_name, backup_dir):
+    """backup a file and return path to that backed up file"""
     logger.debug(
         "\n\n*chapter name: {}\n* srcfile: {}\n* dest dir: {}".format(
             chapter_name, chapter_filepath, backup_dir
@@ -422,10 +409,8 @@ def backup_file(chapter_filepath, chapter_name, backup_dir):
     return dest_filepath
 
 
-""" convert a .docx file to a .txt file """
-
-
 def docx_to_txt(srcpath, destpath):
+    """convert a .docx file to a .txt file"""
     if not os.path.exists(srcpath):
         raise Exception(
             "Trying to convert a docx to txt, but the docx "
