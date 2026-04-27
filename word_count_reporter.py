@@ -1,3 +1,29 @@
+"""Word count reporter for text and DOCX documents.
+
+This script reads an input file containing a project title and a list of
+chapters with their corresponding file paths, counts the words in each
+document (.txt or .docx), and generates an HTML report with a table of
+word counts.
+
+Usage:
+    python word_count_reporter.py -i INPUT_FILE [OPTIONS]
+
+Input file format:
+    The input file must be parsable by the custom `inputfile` module.
+    Expected structure: title line followed by chapter entries, each with
+    a chapter name and file path.
+
+Dependencies:
+    - python-docx: for reading .docx files
+    - beautifulsoup4: for HTML generation
+    - inputfile (local module): for parsing the input file format
+    - report_template.html: must exist in the working directory
+
+Output:
+    Generates an HTML report and opens it in the default web browser.
+    Optionally backs up source files as .txt in a subdirectory.
+"""
+
 from datetime import datetime as dt
 from docx import Document
 from bs4 import BeautifulSoup
@@ -19,7 +45,14 @@ ENC = "utf-8"
 
 
 def main(args):
+    """Main entry point: parse arguments, process files, generate report.
 
+    Args:
+        args (list): Command-line arguments (typically sys.argv[1:]).
+
+    Returns:
+        None
+    """
     parser = argparse.ArgumentParser(
         description="Create a word count report",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -187,16 +220,15 @@ def main(args):
 
 
 def parse_input_file(filepath):
-    """
-    returns 2 items:
+    """Parse the input file and extract title and chapter file paths.
 
-        title
-            the title of the project
-        my_data
-            array of arrays.
-            one inner array for each chapter.
-            each inner array is:
-                [chapter name, filepath to chapter]
+    Args:
+        filepath (str): Path to the input file.
+
+    Returns:
+        tuple: (title, my_data) where:
+            - title (str): Project title from input file.
+            - my_data (list): List of [chapter_name, file_path] pairs.
     """
     title, file_data, inputfile_had_parts = inputfile.parse_data_file(filepath)
     my_data = []
@@ -210,13 +242,28 @@ def parse_input_file(filepath):
 
 
 def make_report(title, file_info_list, outfile, force):
+    """Augment file info with word counts and generate the report.
+
+    Args:
+        title (str): Project title.
+        file_info_list (list): List of [chapter_name, file_path] pairs.
+        outfile (str): Output HTML file path.
+        force (bool): Overwrite output file if exists.
+
+    Returns:
+        str: Path to the generated report file (returned by generate_report).
+    """
     for file_info in file_info_list:
         file_info.append(file_word_count(file_info[1]))
     return generate_report(title, file_info_list, outfile, force)
 
 
 def timestamp():
-    """date string with no spaces for timestamping files"""
+    """Return a timestamp string safe for use in filenames.
+
+    Returns:
+        str: Current timestamp in format YYYY_MM_DD-HH_MM_SS.
+    """
     # format the datetime without any spaces
     fmt = "%Y_%m_%d-%H_%M_%S"
     ct = dt.now().strftime(fmt)
@@ -235,6 +282,17 @@ def date_string():
 
 
 def file_contents(filepath):
+    """Read and return the entire contents of a text file.
+
+    Args:
+        filepath (str): Path to the file to read.
+
+    Returns:
+        str: File contents.
+
+    Raises:
+        Exception: If the file does not exist.
+    """
     if not os.path.exists(filepath):
         raise Exception("{} doesn't exist".format(filepath))
     file = open(filepath, "r", encoding=ENC)
@@ -244,6 +302,18 @@ def file_contents(filepath):
 
 
 def write_file(filepath, data, force):
+    """Write data to a file, creating directories as needed.
+
+    Args:
+        filepath (str): Absolute path to the output file.
+        data (str): Content to write.
+        force (bool): If True, overwrite existing file. If False, require
+                      that the file does not already exist.
+
+    Raises:
+        Exception: If filepath is not absolute.
+        Exception: If file exists and force is False.
+    """
     if not os.path.isabs(filepath):
         raise Exception("Output file {} is not absolute!".format(filepath))
     if os.path.exists(filepath) and not force:
@@ -266,7 +336,17 @@ def write_file(filepath, data, force):
 
 
 def generate_report(title, word_count_info, outfile, force):
+    """Generate an HTML report from word count data.
 
+    Args:
+        title (str): Project title.
+        word_count_info (list): List of [chapter_name, file_path, word_count].
+        outfile (str): Output HTML file path.
+        force (bool): Overwrite output file if exists.
+
+    Returns:
+        str: Path to the generated report file.
+    """
     date = date_string()
 
     contents = file_contents("report_template.html")
@@ -291,11 +371,13 @@ def generate_report(title, word_count_info, outfile, force):
 
 
 def file_url(filepath):
-    """
-    takes a filepath on the filesystem
-    and returns a string that will open
-    it in the browser. i.e.
-    file:///C:/Users/Boris/file.txt
+    """Convert a local file path to a file:// URL for HTML links.
+
+    Args:
+        filepath (str): Local file path (backslashes allowed).
+
+    Returns:
+        str: URL in format file:///C:/path/to/file.
     """
     filestr = filepath.replace("\\", "/")
     filestr = "file:///" + filestr
@@ -303,11 +385,27 @@ def file_url(filepath):
 
 
 def number(numstr):
+    """Format a number with thousand separators.
+
+    Args:
+        numstr (int or str): Number to format.
+
+    Returns:
+        str: Number with commas as thousand separators.
+    """
     return f"{numstr:,}"
 
 
 def word_count_row(file_info, row_num):
+    """Create an HTML table row for a single chapter's word count.
 
+    Args:
+        file_info (list): [chapter_name, file_path, word_count].
+        row_num (int): Row number (1-indexed) for display.
+
+    Returns:
+        BeautifulSoup: HTML element representing the table row.
+    """
     return BeautifulSoup(
         """<tr>
                          <td>{}</td>
@@ -322,6 +420,14 @@ def word_count_row(file_info, row_num):
 
 
 def total_row(total):
+    """Create an HTML table row for the total word count.
+
+    Args:
+        total (int): Total word count across all chapters.
+
+    Returns:
+        BeautifulSoup: HTML element representing the total row.
+    """
     return BeautifulSoup(
         """<tr id="total">
                          <td colspan="3">Total</td>
@@ -332,6 +438,14 @@ def total_row(total):
 
 
 def word_count_docx(filepath):
+    """Count words in a .docx file.
+
+    Args:
+        filepath (str): Path to the .docx file.
+
+    Returns:
+        int: Number of words (split on whitespace per paragraph).
+    """
     document = Document(filepath)
     num_words = 0
     for paragraph in document.paragraphs:
@@ -341,6 +455,14 @@ def word_count_docx(filepath):
 
 
 def word_count_txt(filepath):
+    """Count words in a .txt file.
+
+    Args:
+        filepath (str): Path to the .txt file.
+
+    Returns:
+        int: Number of words (split on whitespace per line).
+    """
     num_words = 0
     with open(filepath, "r", encoding=ENC) as f:
         for line in f:
@@ -350,7 +472,17 @@ def word_count_txt(filepath):
 
 
 def file_word_count(filepath):
+    """Dispatch word counting based on file extension.
 
+    Args:
+        filepath (str): Path to the file (.txt or .docx).
+
+    Returns:
+        int: Word count.
+
+    Raises:
+        Exception: If file does not exist or extension is not supported.
+    """
     if not os.path.exists(filepath):
         raise Exception("File {} does not exist!".format(filepath))
 
@@ -368,14 +500,15 @@ def file_word_count(filepath):
 
 
 def backup(files_info, report_dir):
-    """
-    backs up all the files in files_info,
-    and returns a list of filepaths to
-    those backed up files, in same order.
-    (Note: for each file to back up, if
-    the file is .txt, it copies it directly
-    to report_dir; if it's .docx, it converts
-    it to .txt and copies that to report_dir)
+    """Back up all source files to a subdirectory.
+
+    Args:
+        files_info (list): List of [chapter_name, file_path] pairs.
+        report_dir (str): Directory where the report will be saved; backups
+                          are placed in a "files" subdirectory.
+
+    Returns:
+        list: Paths to the backed-up files, in the same order as files_info.
     """
     destfiles = []
     backup_dir = os.path.join(report_dir, "files")
@@ -387,7 +520,20 @@ def backup(files_info, report_dir):
 
 
 def backup_file(chapter_filepath, chapter_name, backup_dir):
-    """backup a file and return path to that backed up file"""
+    """Back up a single file, converting .docx to .txt if needed.
+
+    Args:
+        chapter_filepath (str): Path to the source file.
+        chapter_name (str): Name of the chapter (used for naming .txt output
+                            when converting from .docx).
+        backup_dir (str): Destination directory for the backup.
+
+    Returns:
+        str: Path to the backed-up file.
+
+    Raises:
+        Exception: If file extension is not .txt or .docx.
+    """
     logger.debug(
         "\n\n*chapter name: {}\n* srcfile: {}\n* dest dir: {}".format(
             chapter_name, chapter_filepath, backup_dir
@@ -410,7 +556,15 @@ def backup_file(chapter_filepath, chapter_name, backup_dir):
 
 
 def docx_to_txt(srcpath, destpath):
-    """convert a .docx file to a .txt file"""
+    """Convert a .docx file to a plain text file.
+
+    Args:
+        srcpath (str): Path to the source .docx file.
+        destpath (str): Path for the output .txt file.
+
+    Raises:
+        Exception: If srcpath does not exist or destpath already exists.
+    """
     if not os.path.exists(srcpath):
         raise Exception(
             "Trying to convert a docx to txt, but the docx "
