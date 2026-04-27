@@ -29,16 +29,16 @@ from docx import Document
 from bs4 import BeautifulSoup
 import webbrowser
 import sys
-import os
 import argparse
 import inputfile
 import shutil
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-REPORT_DIR = (
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPORT_DIR = Path(
     "C:\\Users\\Boris\\Documents\\programming\\git repos\\word-count-reporter\\reports"
 )
 ENC = "utf-8"
@@ -121,17 +121,17 @@ def main(args):
     # console.setFormatter(logging.Formatter('%(name)-12s: %(message)s'))
     logger.addHandler(console)
 
-    ifile = args.input
-    if not os.path.exists(ifile):
-        raise Exception("Input file {} does not exist!".format(ifile))
-    if not os.path.isabs(ifile):
-        ifile = os.path.abspath(os.path.join(SCRIPT_DIR, ifile))
+    ifile = Path(args.input)
+    if not ifile.exists():
+        raise Exception("Input file {} does not exist!".format(str(ifile)))
+    if not ifile.is_absolute():
+        ifile = (SCRIPT_DIR / ifile).resolve()
 
     # parse the input file
     # note: input_data is array of arrays.
     # each inner array corresponds to a chapter.
     # each inner array is [chap name, path to file]
-    title, input_data = parse_input_file(ifile)
+    title, input_data = parse_input_file(str(ifile))
 
     # generic output file and possibly folder
     # (if --backup, will encorporate a folder)
@@ -150,11 +150,12 @@ def main(args):
 
     # determine report file path, and backup dir if needed
 
-    report_dir = None  # dir to hold the report (and backups)
+    report_dir = None  # Path object to hold the report (and backups)
     report_filename = None  # name of the report
 
     if args.output:  # --output arg given
-        root, ext = os.path.splitext(args.output)
+        output_path = Path(args.output)
+        ext = output_path.suffix
         if args.backup:  # --backup given: --output should be a folder
             logger.debug("op #1: (--output, --backup)")
             if ext:
@@ -166,34 +167,34 @@ def main(args):
                     "a FOLDER, which will hold both the report "
                     "file as well as the backed up files :)"
                 )
-            report_dir = args.output
+            report_dir = output_path
             report_filename = generic_filename
         else:  # --backup not given; --output should be a file (the report)
             logger.debug("op #2: (--output, no --backup)")
             if not ext:
                 raise Exception("\n\n--output does not appear to be a file")
-            report_dir = os.path.dirname(args.output)
-            report_filename = os.path.basename(args.output)
+            report_dir = output_path.parent
+            report_filename = output_path.name
     else:  # --output arg not given - use default
-        report_dir = os.path.join(REPORT_DIR, title)
+        report_dir = REPORT_DIR / title
         report_filename = generic_filename
         if (
             args.backup
         ):  # if --backup, default report dir should be an extra FOLDER: it will hold backup + report
             logger.debug("op #3: (no --output, --backup)")
-            report_dir = os.path.join(report_dir, generic_folder)
+            report_dir = report_dir / generic_folder
 
     # final path to the report
-    report_file = os.path.join(report_dir, report_filename)
-    if not os.path.isabs(report_file):
-        report_dir = os.path.join(SCRIPT_DIR, report_file)
+    report_file = report_dir / report_filename
+    if not report_file.is_absolute():
+        report_file = SCRIPT_DIR / report_file
 
-    logger.debug("report dir     : " + report_dir)
+    logger.debug("report dir     : " + str(report_dir))
     logger.debug("report filename: " + report_filename)
-    logger.debug("Report file    : " + report_file)
+    logger.debug("Report file    : " + str(report_file))
 
     # if the report dir doesnt exist, create it
-    os.makedirs(report_dir, exist_ok=True)
+    report_dir.mkdir(parents=True, exist_ok=True)
 
     # 2:40 pm 10/10/24
     # 2:48
@@ -202,7 +203,7 @@ def main(args):
     logger.debug(input_data)
 
     if args.backup:
-        backup_files = backup(input_data, report_dir)
+        backup_files = backup(input_data, str(report_dir))
         new_idata = []
         logger.debug("loop through and back up files")
         # zip allows you to loop through 2 lists at once
@@ -213,7 +214,7 @@ def main(args):
     logger.debug("new input data:")
     logger.debug(input_data)
 
-    report = make_report(title, input_data, report_file, args.FORCE)
+    report = make_report(title, input_data, str(report_file), args.FORCE)
 
     logger.info(report)
     webbrowser.open(report)
@@ -236,7 +237,7 @@ def parse_input_file(filepath):
         filename = data[1]  # chapter name
         filepath = data[2]  # filepath to chapter
         if not filename:  # if no chapter name, make it the name of the file
-            filename = os.path.basename(filepath)
+            filename = Path(filepath).name
         my_data.append([filename, filepath])
     return title, my_data
 
@@ -293,9 +294,10 @@ def file_contents(filepath):
     Raises:
         Exception: If the file does not exist.
     """
-    if not os.path.exists(filepath):
-        raise Exception("{} doesn't exist".format(filepath))
-    file = open(filepath, "r", encoding=ENC)
+    path = Path(filepath)
+    if not path.exists():
+        raise Exception("{} doesn't exist".format(str(path)))
+    file = open(path, "r", encoding=ENC)
     file_str = file.read()
     file.close()
     return file_str
@@ -314,23 +316,23 @@ def write_file(filepath, data, force):
         Exception: If filepath is not absolute.
         Exception: If file exists and force is False.
     """
-    if not os.path.isabs(filepath):
-        raise Exception("Output file {} is not absolute!".format(filepath))
-    if os.path.exists(filepath) and not force:
+    path = Path(filepath)
+    if not path.is_absolute():
+        raise Exception("Output file {} is not absolute!".format(str(path)))
+    if path.exists() and not force:
         raise Exception(
             "Output file {} exists! "
             "Use --FORCE / -F"
-            " to overwrite".format(filepath)
+            " to overwrite".format(str(path))
         )
     # create dirs in path if they don't exist
-    basedir = os.path.dirname(filepath)
-    if not os.path.exists(basedir):
-        os.makedirs(basedir)
+    basedir = path.parent
+    basedir.mkdir(parents=True, exist_ok=True)
 
     if force:
-        wr = open(filepath, "w", encoding=ENC)
+        wr = open(path, "w", encoding=ENC)
     else:
-        wr = open(filepath, "x", encoding=ENC)
+        wr = open(path, "x", encoding=ENC)
     wr.write(data)
     wr.close()
 
@@ -483,14 +485,15 @@ def file_word_count(filepath):
     Raises:
         Exception: If file does not exist or extension is not supported.
     """
-    if not os.path.exists(filepath):
-        raise Exception("File {} does not exist!".format(filepath))
+    path = Path(filepath)
+    if not path.exists():
+        raise Exception("File {} does not exist!".format(str(path)))
 
-    extension = os.path.splitext(filepath)[1]
+    extension = path.suffix
     if extension == ".txt":
-        return word_count_txt(filepath)
+        return word_count_txt(str(path))
     if extension == ".docx":
-        return word_count_docx(filepath)
+        return word_count_docx(str(path))
     else:
         raise Exception(
             "invalid filetype {}. "
@@ -511,11 +514,11 @@ def backup(files_info, report_dir):
         list: Paths to the backed-up files, in the same order as files_info.
     """
     destfiles = []
-    backup_dir = os.path.join(report_dir, "files")
+    backup_dir = Path(report_dir) / "files"
     for file_info in files_info:
         # 'backup' the file and add filepath of
         # backed up file to destfiles
-        destfiles.append(backup_file(file_info[1], file_info[0], backup_dir))
+        destfiles.append(backup_file(file_info[1], file_info[0], str(backup_dir)))
     return destfiles
 
 
@@ -539,20 +542,24 @@ def backup_file(chapter_filepath, chapter_name, backup_dir):
             chapter_name, chapter_filepath, backup_dir
         )
     )
-    extension = os.path.splitext(chapter_filepath)[1]
-    dest_filepath = None
+    src_path = Path(chapter_filepath)
+    dest_dir = Path(backup_dir)
+    extension = src_path.suffix
+    dest_filepath = None  # will be a Path object
     if extension == ".docx":
-        filename_no_ext = os.path.splitext(chapter_name)[0]
-        dest_filepath = os.path.join(backup_dir, filename_no_ext + ".txt")
-        docx_to_txt(chapter_filepath, dest_filepath)
+        filename_no_ext = Path(
+            chapter_name
+        ).stem  # explore: isnt' chapter_name just a simple string (not a path)?
+        dest_filepath = dest_dir / Path(filename_no_ext + ".txt")
+        docx_to_txt(str(src_path), str(dest_filepath))
     elif extension == ".txt":
-        filename = os.path.basename(chapter_filepath)
-        dest_filepath = os.path.join(backup_dir, filename)
-        shutil.copyfile(chapter_filepath, dest_filepath)
+        filename = src_path.name
+        dest_filepath = dest_dir / filename
+        shutil.copyfile(str(src_path), str(dest_filepath))
     else:
         raise Exception("file to backup isn't .docx or .txt")
-    logger.debug("\tFile backed up to: " + dest_filepath)
-    return dest_filepath
+    logger.debug("\tFile backed up to: " + str(dest_filepath))
+    return str(dest_filepath)
 
 
 def docx_to_txt(srcpath, destpath):
@@ -565,12 +572,12 @@ def docx_to_txt(srcpath, destpath):
     Raises:
         Exception: If srcpath does not exist or destpath already exists.
     """
-    if not os.path.exists(srcpath):
+    if not Path(srcpath).exists():
         raise Exception(
             "Trying to convert a docx to txt, but the docx "
             " file doesn't exist: {}".format(srcpath)
         )
-    if os.path.exists(destpath):
+    if Path(destpath).exists():
         raise Exception(
             "Trying to convert a docx to a text file, "
             "but proposed destination path already "
@@ -578,8 +585,9 @@ def docx_to_txt(srcpath, destpath):
         )
 
     # need to create parent dir of file writing to or python will error
-    os.makedirs(os.path.dirname(destpath), exist_ok=True)
-    with open(destpath, "w", encoding=ENC) as destfile:
+    dest = Path(destpath)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    with open(dest, "w", encoding=ENC) as destfile:
         document = Document(srcpath)
         for paragraph in document.paragraphs:
             destfile.write(paragraph.text + "\n")
