@@ -42,6 +42,9 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 REPORT_DIR = Path(
     "C:\\Users\\Boris\\Documents\\programming\\git repos\\word-count-reporter\\reports"
 )
+# dir where js and css to embed live
+ASSETS_SRC = SCRIPT_DIR / "assets"
+
 ENC = "utf-8"
 
 
@@ -357,9 +360,15 @@ def generate_report(
     date = date_string()
 
     contents = file_contents(Path("report_template.html"))
+    # css and js to embed
+    css_contents = file_contents(ASSETS_SRC / "style.css")
+    js_contents = file_contents(ASSETS_SRC / "scripts.js")
 
     contents = contents.replace("%title%", title)
     contents = contents.replace("%date%", date)
+    # embed css and js for portability
+    contents = contents.replace("%css%", css_contents)
+    contents = contents.replace("%script%", js_contents)
 
     soup = BeautifulSoup(contents.encode(ENC), "html.parser")
 

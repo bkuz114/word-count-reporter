@@ -1,0 +1,43 @@
+body {
+    background: lemonchiffon;
+}
+
+#header {
+    text-align: center;
+    padding: 20px;
+}
+
+#title {
+    font-size: 35px;
+}
+
+#date {
+    font-size: 30px;
+}
+
+#word-count-table {
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 20px;
+    border-collapse: collapse;
+    background-color: white;
+}
+
+#total {
+    font-weight: bold;
+    background-color: lightgray;
+}
+
+th,
+td {
+    padding: 2px;
+    border: 1px solid black;
+}
+
+th {
+    background-color: lightgray;
+}
+
+.sortable {
+    cursor: pointer;
+}
