@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+dev_env/
+test_env/
+ENV/
+
+# PHP web UI
+web_ui/tmp/
+*.log
+
+# Generated reports
+reports/
+*.html
+
+# IDE and system
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Project specific
+tmpfile.txt
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
