@@ -39,9 +39,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPORT_DIR = Path(
-    "C:\\Users\\Boris\\Documents\\programming\\git repos\\word-count-reporter\\reports"
-)
+REPORT_DIR = SCRIPT_DIR / "reports"
 # dir where js and css to embed live
 ASSETS_SRC = SCRIPT_DIR / "assets"
 
