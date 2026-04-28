@@ -12,15 +12,18 @@
         <div id="title">%title%<br><em>Word Count Report</em></div>
         <div id="date">%date%</div>
     </div>
-    <table id="word-count-table">
-        <tr>
-            <!--When a header is clicked, run the sortTable function, with a parameter, 0 for sorting by names, 1 for sorting by country:-->
-            <th class="sortable" onclick="sortTable(0)">#</th>
-            <th class="sortable" onclick="sortTable(1)">Name</th>
-            <th>File</th>
-            <th class="sortable" onclick="sortTable(3)">Word Count</th>
-        </tr>
-    </table>
+
+    <div class="table-wrapper">
+        <table id="word-count-table">
+            <tr>
+                <!--When a header is clicked, run the sortTable function, with a parameter, 0 for sorting by names, 1 for sorting by country:-->
+                <th class="sortable" onclick="sortTable(0)">#</th>
+                <th class="sortable" onclick="sortTable(1)">Name</th>
+                <th>File</th>
+                <th class="sortable" onclick="sortTable(3)">Word Count</th>
+            </tr>
+        </table>
+    </div>
 
     <script>
         %script%

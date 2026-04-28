@@ -1,43 +1,255 @@
-body {
-    background: lemonchiffon;
+/* ============================================================
+   Word Count Report - Professional Theme
+   CSS Custom Properties (variables) for easy theme switching
+   ============================================================ */
+
+:root {
+    /* Color system - Slate + Blue accent */
+    --color-bg-page: #f8fafc;
+    --color-bg-surface: #ffffff;
+    --color-bg-header: #1e293b;
+    --color-bg-stripe: #f8fafc;
+    --color-bg-total: var(--color-bg-header);
+
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-header: #ffffff;
+    --color-text-link: #2563eb;
+    --color-text-link-hover: #1d4ed8;
+    --color-text-total: var(--color-text-header);
+
+    --color-border: #e2e8f0;
+    --color-border-focus: #3b82f6;
+
+    --color-accent: #3b82f6;
+    --color-accent-hover: #2563eb;
+    --color-sortable-hover: #f1f5f9;
+
+    /* Typography */
+    --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    --font-size-base: 16px;
+    --font-size-small: 0.875rem;
+    --font-size-large: 1.25rem;
+    --font-size-title: 2rem;
+    --font-size-date: 1rem;
+
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+
+    /* Borders & Shadows */
+    --border-radius: 0.5rem;
+    --border-radius-sm: 0.25rem;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
+/* Base reset */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--color-bg-page);
+    color: var(--color-text-primary);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    padding: var(--spacing-xl) var(--spacing-md);
+}
+
+/* Header styling (semantic <header> or #header) */
+header,
 #header {
+    /**
+	 * background: var(--color-bg-header);
+	 * color: var(--color-text-header);
+	 * border-radius: var(--border-radius);
+	 * box-shadow: var(--shadow-md);
+	 * padding: var(--spacing-md);
+	 */
+    margin-bottom: var(--spacing-xl);
     text-align: center;
-    padding: 20px;
 }
 
 #title {
-    font-size: 35px;
+    font-size: var(--font-size-title);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: var(--spacing-xs);
+}
+
+#title em {
+    font-size: var(--font-size-large);
+    font-weight: 400;
+    opacity: 0.85;
+    font-style: normal;
 }
 
 #date {
-    font-size: 30px;
+    font-size: var(--font-size-date);
+    opacity: 0.8;
+    margin-top: var(--spacing-sm);
 }
 
-#word-count-table {
+/* Responsive table wrapper */
+.table-wrapper {
+    width: fit-content;
     margin-left: auto;
     margin-right: auto;
-    font-size: 20px;
+    overflow-x: auto;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Table styling */
+#word-count-table {
+    width: auto;
+    background: var(--color-bg-surface);
     border-collapse: collapse;
-    background-color: white;
+    font-size: var(--font-size-base);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    overflow: hidden;
 }
 
-#total {
-    font-weight: bold;
-    background-color: lightgray;
+/* Table cells */
+#word-count-table th,
+#word-count-table td {
+    padding: var(--spacing-md) var(--spacing-lg);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
 }
 
-th,
-td {
-    padding: 2px;
-    border: 1px solid black;
+/* Header row */
+#word-count-table th {
+    background: var(--color-bg-header);
+    color: var(--color-text-header);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-size: var(--font-size-small);
 }
 
-th {
-    background-color: lightgray;
-}
-
+/* Sortable headers */
 .sortable {
     cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.sortable:hover {
+    background: var(--color-accent-hover);
+}
+
+/* Focus indicator for keyboard accessibility */
+.sortable:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: -2px;
+    background: var(--color-accent-hover);
+}
+
+/* Table rows - alternating stripes */
+#word-count-table tbody tr:nth-child(even) {
+    background-color: var(--color-bg-stripe);
+}
+
+#word-count-table tbody tr:hover {
+    background-color: var(--color-sortable-hover);
+}
+
+/* Total row styling */
+#total {
+    background-color: var(--color-bg-total);
+    color: var(--color-text-total);
+    font-weight: 700;
+    border-top: 2px solid var(--color-border);
+}
+
+#word-count-table tbody #total:hover {
+    background-color: var(--color-bg-total);
+    color: var(--color-text-total);
+}
+
+#total td {
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+/* Link styling (file column) */
+#word-count-table a {
+    color: var(--color-text-link);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+#word-count-table a:hover {
+    color: var(--color-text-link-hover);
+    text-decoration: underline;
+}
+
+#word-count-table a:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    border-radius: var(--border-radius-sm);
+}
+
+/* Column alignment tweaks */
+#word-count-table td:first-child,
+#word-count-table th:first-child {
+    text-align: left;
+    width: 4rem;
+}
+
+#word-count-table td:last-child,
+#word-count-table th:last-child {
+    text-align: right;
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+    font-feature-settings: 'tnum';
+}
+
+#word-count-table td:last-child {
+    font-weight: 500;
+}
+
+/* ============================================================
+   Print-friendly styles
+   ============================================================ */
+@media print {
+    :root {
+        --color-bg-page: white;
+        --color-bg-surface: white;
+        --color-bg-header: #f1f5f9;
+        --color-text-primary: black;
+        --color-text-header: black;
+        --color-border: #ccc;
+        --color-bg-stripe: #f9fafb;
+        --color-text-link: black;
+        --color-bg-total: #f3f4f6;
+    }
+
+    body {
+        padding: 0;
+        margin: 0;
+    }
+
+    .sortable {
+        cursor: default;
+    }
+
+    #word-count-table a {
+        text-decoration: none;
+    }
+
+    .table-wrapper {
+        overflow: visible;
+        box-shadow: none;
+    }
+
+    #word-count-table {
+        border: 1px solid #000;
+    }
 }
