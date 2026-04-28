@@ -164,7 +164,7 @@ header,
 }
 
 /* Total row styling */
-#total {
+#word-count-table tbody #total {
     background-color: var(--color-bg-total);
     color: var(--color-text-total);
     font-weight: 700;
