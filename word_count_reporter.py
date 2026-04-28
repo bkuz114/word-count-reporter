@@ -6,7 +6,7 @@ document (.txt or .docx), and generates an HTML report with a table of
 word counts.
 
 Usage:
-    python word_count_reporter.py -i INPUT_FILE [OPTIONS]
+    python word_count_reporter.py INPUT_FILE [OPTIONS]
 
 Input file format:
     The input file must be parsable by the custom `inputfile` module.
@@ -61,7 +61,7 @@ def main(args: list[str]) -> None:
         description="Create a word count report",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("-i", "--input", required=True, type=Path, help="Input file")
+    parser.add_argument("input", type=Path, help="Input file (positional argument)")
     parser.add_argument(
         "-o",
         "--output",
