@@ -333,12 +333,9 @@ def write_file(filepath: Path, data: str, force: bool) -> None:
     basedir = filepath.parent
     basedir.mkdir(parents=True, exist_ok=True)
 
-    if force:
-        wr = open(filepath, "w", encoding=ENC)
-    else:
-        wr = open(filepath, "x", encoding=ENC)
-    wr.write(data)
-    wr.close()
+    mode = "w" if force else "x"
+    with open(filepath, mode, encoding=ENC) as wr:
+        wr.write(data)
 
 
 def generate_report(
