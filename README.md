@@ -8,6 +8,7 @@ Generate an HTML word count report from a collection of text (.txt) and Microsof
 - Generates a sortable HTML report with chapter-by-chapter word counts
 - Optionally backs up source files as plain text alongside the report
 - Self-contained HTML report (no external dependencies after generation)
+- Web interface for file upload and report generation (PHP)
 
 ## Installation
 
@@ -44,17 +45,19 @@ pip install -r requirements.txt
 
 ## Usage
 
+### Command Line Interface
+
 ```bash
 python word_count_reporter.py INPUTFILE [options]
 ```
 
-### Positional Arguments
+#### Positional Arguments
 
 | Argument | Description |
 |----------|-------------|
 | `INPUTFILE` | Input file describing the project title and list of chapter files |
 
-### Options
+#### Options
 
 | Option | Description |
 |--------|-------------|
@@ -65,6 +68,70 @@ python word_count_reporter.py INPUTFILE [options]
 | `-F`, `--FORCE` | Overwrite output file if it already exists. |
 | `--loglevel {debug,info}` | Set logging verbosity (default: `info`). |
 | `-h`, `--help` | Show help message and exit. |
+
+### Web Interface (PHP)
+
+A minimal web interface is included for users who prefer a GUI. The interface allows uploading an input file and optionally backing up source files.
+
+#### Requirements
+
+- PHP 7.4 or higher
+- Web server (Apache, Nginx, or PHP's built-in server)
+- Python 3.6+ with dependencies installed
+- Fileinfo PHP extension (recommended)
+
+#### Quick Start
+
+From the project directory, start a PHP web server:
+
+```bash
+php -S localhost:8000
+```
+
+Then open `http://localhost:8000/index.html` in your browser.
+
+#### File Upload Requirements
+
+**Important:** When using the web interface, chapter files must be referenced using **absolute paths** in your input file, or you must set the `root` key to an absolute path.
+
+Reason: The web server cannot access your local file system's original paths. Uploaded input files are moved to a temporary location on the server. To ensure chapter files are found, use one of the following approaches:
+
+**Option 1: Absolute paths in chapter entries**
+
+```
+[book]
+::C:/Users/YourName/Documents/chapter1.txt
+::C:/Users/YourName/Documents/chapter2.docx
+```
+
+**Option 2: Absolute `root` path with relative chapter entries**
+
+```
+[keys]
+root: C:/Users/YourName/Documents
+
+[book]
+::chapter1.txt
+::chapter2.docx
+```
+
+#### PHP Configuration
+
+If you encounter a `Call to undefined function finfo_open()` error, enable the Fileinfo extension:
+
+**Windows (XAMPP/WAMP):**
+1. Open `php.ini` (e.g., `C:\xampp\php\php.ini`)
+2. Find `;extension=fileinfo` or `;extension=php_fileinfo.dll`
+3. Remove the semicolon to uncomment
+4. Restart your web server
+
+**Linux/macOS:**
+```bash
+sudo apt-get install php-fileinfo   # Debian/Ubuntu
+sudo yum install php-fileinfo        # RHEL/CentOS
+sudo phpenmod fileinfo               # Enable the extension
+sudo systemctl restart apache2       # Restart web server
+```
 
 ## Input File Format
 
@@ -91,7 +158,7 @@ Optional key-value pairs that configure the report. Supported keys:
 | Key | Description |
 |-----|-------------|
 | `title` | Project title displayed in the report header. |
-| `root` | Base directory for relative file paths in the `[book]` section. |
+| `root` | Base directory for relative file paths in the `[book]` section. **For web interface, this must be an absolute path.** |
 
 ### Section: `[book]`
 
@@ -107,7 +174,7 @@ Lists the documents to process. Each line follows the format:
 |-------|-------------|
 | `chapter_number` | Optional. If omitted, numbering continues from previous chapter (starting at 1). |
 | `chapter_name` | Optional. If omitted, defaults to the base filename of `filepath`. |
-| `filepath` | Required. Path to a `.txt` or `.docx` file. Relative paths are resolved against the `root` key (if provided) or the input file's directory. |
+| `filepath` | Required. Path to a `.txt` or `.docx` file. For CLI tool: relative paths are resolved against the `root` key (if provided) or the input file's directory. For the web interface, use absolute paths or set `root` to an absolute path. |
 
 #### Examples
 
@@ -119,7 +186,7 @@ Lists the documents to process. Each line follows the format:
 
 ## Examples
 
-### Basic usage
+### Command line
 
 ```bash
 python word_count_reporter.py example_inputfile.txt
@@ -155,6 +222,14 @@ python word_count_reporter.py example_inputfile.txt --usetitle
 
 Generates a file like `My_Project-word-count-report_2025_01_15-14_30_00.html`.
 
+### Web interface
+
+1. Start the PHP server: `php -S localhost:8000`
+2. Open `http://localhost:8000/index.html`
+3. Upload your input file (with absolute paths)
+4. Optionally check "Back up source files as text"
+5. Click "Generate Report"
+
 ## Output
 
 The script generates a self-contained HTML report containing:
@@ -164,13 +239,15 @@ The script generates a self-contained HTML report containing:
 - Links to source files (original or backed-up versions)
 - Total word count across all chapters
 
-The report automatically opens in your default web browser after generation.
+When using the command line, the report automatically opens in your default web browser after generation. The web interface displays a link to the generated report.
 
 ## Troubleshooting
 
 ### File not found errors
 
-Ensure file paths in the `[book]` section are correct. Use the `root` key in `[keys]` to set a base directory for relative paths.
+**Command line:** Ensure file paths in the `[book]` section are correct. Use the `root` key to set a base directory for relative paths.
+
+**Web interface:** Chapter files must use absolute paths, or `root` must be an absolute path. The web server cannot resolve relative paths from your local machine.
 
 ### Unsupported file type
 
@@ -179,3 +256,11 @@ Only `.txt` and `.docx` files are supported. Other file types will raise an erro
 ### Output file exists
 
 Use `-F` or `--FORCE` to overwrite an existing output file.
+
+### finfo_open() error in web interface
+
+Enable the PHP Fileinfo extension (see PHP Configuration section above).
+
+### Command not found (Windows)
+
+Use `python` or `py` depending on your installation. You may need to use the full path to Python or add it to your PATH.
