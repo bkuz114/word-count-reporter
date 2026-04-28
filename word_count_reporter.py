@@ -42,7 +42,7 @@ __version__ = "1.0.0"
 logger = logging.getLogger(__name__)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPORT_DIR = SCRIPT_DIR / "reports"
+REPORT_DIR = Path.cwd() / "reports"
 TEMPLATES_DIR = SCRIPT_DIR / "report_templates"
 # dir where js and css to embed live
 ASSETS_SRC = TEMPLATES_DIR / "assets"
