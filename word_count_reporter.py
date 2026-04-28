@@ -56,10 +56,15 @@ def main(args: list[str]) -> None:
         None
     """
     parser = argparse.ArgumentParser(
-        description="Create a word count report",
+        description="Generate a word count report from text and DOCX documents.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("input", type=Path, help="Input file (positional argument)")
+    parser.add_argument(
+        "input",
+        metavar="INPUTFILE",
+        type=Path,
+        help="Input file describing project title and chapter file paths",
+    )
     parser.add_argument(
         "-o",
         "--output",
