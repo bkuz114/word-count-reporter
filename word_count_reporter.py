@@ -58,10 +58,11 @@ def main(args: list[str]) -> None:
         description="Create a word count report",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("-i", "--input", required=True, help="Input file")
+    parser.add_argument("-i", "--input", required=True, type=Path, help="Input file")
     parser.add_argument(
         "-o",
         "--output",
+        type=Path,
         help="""Output file. If not supplied,
                         will be based on title and timestamp""",
         required=False,
@@ -122,7 +123,7 @@ def main(args: list[str]) -> None:
     # console.setFormatter(logging.Formatter('%(name)-12s: %(message)s'))
     logger.addHandler(console)
 
-    ifile = Path(args.input)
+    ifile = args.input
     if not ifile.exists():
         raise Exception("Input file {} does not exist!".format(str(ifile)))
     if not ifile.is_absolute():
@@ -155,7 +156,7 @@ def main(args: list[str]) -> None:
     report_filename = None  # name of the report
 
     if args.output:  # --output arg given
-        output_path = Path(args.output)
+        output_path = args.output
         ext = output_path.suffix
         if args.backup:  # --backup given: --output should be a folder
             logger.debug("op #1: (--output, --backup)")
@@ -340,7 +341,7 @@ def write_file(filepath: Path, data: str, force: bool) -> None:
 
 
 def generate_report(
-    title: str, word_count_info: list[list[Any]], outfile: Path, force: bool
+    title: str, word_count_info: list[Any], outfile: Path, force: bool
 ) -> Path:
     """Generate an HTML report from word count data.
 
