@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Word count reporter for text and DOCX documents.
 
 This script reads an input file containing a project title and a list of
