@@ -1,6 +1,9 @@
 # Word Count Reporter
 
-Generate an HTML word count report from a collection of text (.txt) and Microsoft Word (.docx) documents.
+[![PyPI version](https://badge.fury.io/py/word-count-reporter.svg)](https://pypi.org/project/word-count-reporter/)
+[![Python versions](https://img.shields.io/pypi/pyversions/word-count-reporter.svg)](https://pypi.org/project/word-count-reporter/)
+
+Generate offline HTML word count reports from collections of text (.txt) and/or Microsoft Word (.docx) documents.
 
 ## Features
 
@@ -10,21 +13,32 @@ Generate an HTML word count report from a collection of text (.txt) and Microsof
 - Self-contained HTML report (no external dependencies after generation)
 - Web interface for file upload and report generation (PHP)
 
+# Quickstart
+
+```bash
+pip install word-count-reporter
+word-count-reporter INPUTFILE
+```
+
+The generated report will open automatically in your browser. That's it.
+
 ## Installation
 
-### Dependencies
+### Option 1: Pip install (recommended for most users)
 
 ```bash
-pip install beautifulsoup4 python-docx
+pip install word-count-reporter
 ```
 
-Or using the provided `requirements.txt`:
+### Option 2: Run from source (development or custom builds)
 
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/REPO/word-count-reporter
+cd word-count-reporter
+pip install -e .
 ```
 
-### Virtual environment (recommended)
+#### From within virtual environment (recommended)
 
 ```bash
 # Create virtual environment
@@ -45,93 +59,40 @@ pip install -r requirements.txt
 
 ## Usage
 
+### Pip package
+
+```bash
+word-count-reporter INPUTFILE [options]
+```
+
 ### Command Line Interface
 
 ```bash
 python word_count_reporter.py INPUTFILE [options]
 ```
 
-#### Positional Arguments
+## Usage Options
 
-| Argument | Description |
-|----------|-------------|
-| `INPUTFILE` | Input file describing the project title and list of chapter files |
+Whether installed via pip or run from source, the same options apply:
 
-#### Options
+| Invocation method | Command |
+|-------------------|---------|
+| Pip-installed | `word-count-reporter INPUTFILE [OPTIONS]` |
+| From source | `python src/word_count_reporter/cli.py INPUTFILE [OPTIONS]` |
+
+### Options
 
 | Option | Description |
 |--------|-------------|
-| `-o OUTPUT`, `--output OUTPUT` | Output file path. If not supplied, auto-generated from title and timestamp in a `reports/` dir created within script dir. When used with `--backup`, this specifies a directory. |
+| `INPUTFILE` | Input file describing the project title and chapter files |
+| `-o OUTPUT`, `--output OUTPUT` | Output file path. If not supplied, auto-generated from title and timestamp. When used with `--backup`, this specifies a directory. |
 | `-b`, `--backup` | Backup source files as text files in the report directory. `.docx` files are converted to `.txt`; `.txt` files are copied as-is. |
 | `-t`, `--notimestamp` | Omit timestamp from auto-generated output filename. |
 | `-u`, `--usetitle` | Use project title in auto-generated output filename. |
 | `-F`, `--FORCE` | Overwrite output file if it already exists. |
 | `--loglevel {debug,info}` | Set logging verbosity (default: `info`). |
 | `-h`, `--help` | Show help message and exit. |
-
-### Web Interface (PHP)
-
-A minimal web interface is included for users who prefer a GUI. The interface allows uploading an input file and optionally backing up source files.
-
-#### Requirements
-
-- PHP 7.4 or higher
-- Web server (Apache, Nginx, or PHP's built-in server)
-- Python 3.6+ with dependencies installed
-- Fileinfo PHP extension (recommended)
-
-#### Quick Start
-
-From the `web_ui` directory, start a PHP web server:
-
-```bash
-cd web_ui && php -S localhost:8000
-```
-
-Then open `http://localhost:8000/index.html` in your browser.
-
-#### File Upload Requirements
-
-**Important:** When using the web interface, chapter files must be referenced using **absolute paths** in your input file, or you must set the `root` key to an absolute path.
-
-Reason: The web server cannot access your local file system's original paths. Uploaded input files are moved to a temporary location on the server. To ensure chapter files are found, use one of the following approaches:
-
-**Option 1: Absolute paths in chapter entries**
-
-```
-[book]
-::C:/Users/YourName/Documents/chapter1.txt
-::C:/Users/YourName/Documents/chapter2.docx
-```
-
-**Option 2: Absolute `root` path with relative chapter entries**
-
-```
-[keys]
-root: C:/Users/YourName/Documents
-
-[book]
-::chapter1.txt
-::chapter2.docx
-```
-
-#### PHP Configuration
-
-If you encounter a `Call to undefined function finfo_open()` error, enable the Fileinfo extension:
-
-**Windows (XAMPP/WAMP):**
-1. Open `php.ini` (e.g., `C:\xampp\php\php.ini`)
-2. Find `;extension=fileinfo` or `;extension=php_fileinfo.dll`
-3. Remove the semicolon to uncomment
-4. Restart your web server
-
-**Linux/macOS:**
-```bash
-sudo apt-get install php-fileinfo   # Debian/Ubuntu
-sudo yum install php-fileinfo        # RHEL/CentOS
-sudo phpenmod fileinfo               # Enable the extension
-sudo systemctl restart apache2       # Restart web server
-```
+| `--version` | Show version number and exit. |
 
 ## Input File Format
 
@@ -184,43 +145,104 @@ Lists the documents to process. Each line follows the format:
 | `:Introduction:intro.docx` | 2 (auto) | `Introduction` | `intro.docx` |
 | `5:Chapter Five:ch5.docx` | 5 | `Chapter Five` | `ch5.docx` |
 
+### Web Interface (PHP)
+
+A minimal web interface is included for users who prefer a GUI. The interface allows uploading an input file and optionally backing up source files.
+
+#### Requirements
+
+- PHP 7.4 or higher
+- Web server (Apache, Nginx, or PHP's built-in server)
+- Python 3.6+ with dependencies installed
+- Fileinfo PHP extension (recommended)
+
+### Quick Start (Web UI)
+
+From the `web_ui` directory, start a PHP web server:
+
+```bash
+cd web_ui
+php -S localhost:8000
+```
+
+Then open `http://localhost:8000` in your browser.
+
+### Important: Absolute Paths Required
+
+When using the web interface, chapter files must use **absolute paths** in your input file, or you must set the `root` key to an absolute path.
+
+Reason: Uploaded input files are moved to a temporary location on the server. The web server cannot access your local file system's original paths. To ensure chapter files are found, use one of the following approaches:
+
+**Option 1: Absolute paths in chapter entries**
+
+```
+[book]
+::C:/Users/YourName/Documents/chapter1.txt
+::C:/Users/YourName/Documents/chapter2.docx
+```
+
+**Option 2: Absolute `root` path with relative chapter entries**
+
+```
+[keys]
+root: C:/Users/YourName/Documents
+
+[book]
+::chapter1.txt
+::chapter2.docx
+```
+
+#### PHP Configuration
+
+If you encounter a `Call to undefined function finfo_open()` error, enable the Fileinfo extension:
+
+**Windows (XAMPP/WAMP):**
+1. Open `php.ini` (e.g., `C:\xampp\php\php.ini`)
+2. Find `;extension=fileinfo` or `;extension=php_fileinfo.dll`
+3. Remove the semicolon to uncomment
+4. Restart your web server
+
+**Linux/macOS:**
+```bash
+sudo apt-get install php-fileinfo   # Debian/Ubuntu
+sudo yum install php-fileinfo        # RHEL/CentOS
+sudo phpenmod fileinfo               # Enable the extension
+sudo systemctl restart apache2       # Restart web server
+```
+
 ## Examples
 
-### Command line
+### Pip-installed CLI
 
 ```bash
-python word_count_reporter.py example_files/example_inputfile.txt
-```
+# Basic usage
+# Generates an HTML report with word counts for all files listed in `example_inputfile.txt`.
+word-count-reporter example_inputfile.txt
 
-This generates an HTML report with word counts for all files listed in `example_inputfile.txt`.
-
-### With backup
-
-```bash
-python word_count_reporter.py example_files/example_inputfile.txt --backup
-```
-
-Creates a directory containing both the HTML report and plain-text copies of all source files.
-
-### Custom output location
-
-```bash
+# With custom output location
 python word_count_reporter.py example_files/example_inputfile.txt -o my_report.html
+
+# With backup
+# Creates a directory containing both the HTML report and plain-text copies of all source files.
+python word_count_reporter.py example_files/example_inputfile.txt --backup
+
+# With backup and custom output
+word-count-reporter example_inputfile.txt --backup -o my_report.html
+
+# Overwrite existing report
+word-count-reporter example_inputfile.txt -o my_report.html -F
+
+# Use project title in filename
+# Generates a file like `My_Project-word-count-report_2025_01_15-14_30_00.html`.
+word-count-reporter example_inputfile.txt --usetitle
 ```
 
-### Overwrite existing report
+### From source (no installation)
 
 ```bash
-python word_count_reporter.py example_files/example_inputfile.txt -o my_report.html -F
+python src/word_count_reporter/cli.py example_inputfile.txt
+python src/word_count_reporter/cli.py example_inputfile.txt --backup -o my_report.html
 ```
-
-### Using project title in filename
-
-```bash
-python word_count_reporter.py example_files/example_inputfile.txt --usetitle
-```
-
-Generates a file like `My_Project-word-count-report_2025_01_15-14_30_00.html`.
 
 ### Web interface
 
@@ -261,6 +283,19 @@ Use `-F` or `--FORCE` to overwrite an existing output file.
 
 Enable the PHP Fileinfo extension (see PHP Configuration section above).
 
+### Permission denied when writing reports
+
+The script writes reports to `./reports/` (current working directory). Ensure you have write permissions in that location.
+
 ### Command not found (Windows)
 
 Use `python` or `py` depending on your installation. You may need to use the full path to Python or add it to your PATH.
+
+## License
+
+MIT License
+
+## Contributing
+
+Issues and pull requests are welcome. Please ensure code passes existing tests and includes appropriate documentation updates.
+

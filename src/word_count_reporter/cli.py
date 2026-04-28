@@ -32,33 +32,71 @@ from typing import Any, Optional, Union
 import webbrowser
 import sys
 import argparse
-import utils.inputfile as inputfile
 import shutil
 import logging
 from pathlib import Path
 
-__version__ = "1.0.0"
+# Add the src directory to Python's path when running from source
+if __name__ == "__main__":
+    src_dir = Path(__file__).parent.parent
+    if str(src_dir) not in sys.path:
+        sys.path.insert(0, str(src_dir))
+
+# Now absolute imports work even when running directly
+from word_count_reporter.utils import inputfile
+from word_count_reporter import __version__
 
 logger = logging.getLogger(__name__)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPORT_DIR = Path.cwd() / "reports"
-TEMPLATES_DIR = SCRIPT_DIR / "report_templates"
+TEMPLATES_DIR = SCRIPT_DIR / "templates"
 # dir where js and css to embed live
 ASSETS_SRC = TEMPLATES_DIR / "assets"
 
 ENC = "utf-8"
 
 
-def main(args: list[str]) -> None:
-    """Main entry point: parse arguments, process files, generate report.
+def main(args: Optional[list[str]] = None) -> None:
+    """Main entry point for the word-count-reporter CLI.
+
+    Why does 'args' exist and why is it optional?
+
+    - The console script (created by pip install) calls main() with NO arguments.
+      (Why: pyproject.toml defines this function as entrypoint -- bypassing __main__)
+      When called this way, main() defaults args=None and reads from sys.argv.
+
+    - When run directly as a script (python cli.py), the __main__ block calls
+      main(sys.argv[1:]) with arguments explicitly passed.
+
+    The optional parameter supports BOTH invocation methods:
+
+        # After pip install (console script calls with no args)
+        $ word-count-reporter input.txt
+        -> main() called with args=None → reads sys.argv
+
+        # Direct execution (__main__ passes args explicitly)
+        $ python src/word_count_reporter/cli.py input.txt
+        -> main(["input.txt"]) called with explicit args → uses them directly
+
+        # Run as module (via __main__.py)
+        $ python -m word_count_reporter input.txt
+        -> same as console script (no args passed to main())
+
+    This pattern is standard for Python CLI tools that are both:
+    - Installable via pip (console script)
+    - Runnable from source without installation
 
     Args:
         args (list): Command-line arguments (typically sys.argv[1:]).
+              If None, uses sys.argv[1:].
 
     Returns:
         None
     """
+    if args is None:
+        args = sys.argv[1:]
+
     parser = argparse.ArgumentParser(
         description="Generate a word count report from text and DOCX documents.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,

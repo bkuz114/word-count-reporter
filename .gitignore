@@ -30,7 +30,6 @@ web_ui/tmp/
 
 # Generated reports
 reports/
-*.html
 
 # IDE and system
 .vscode/

@@ -16,7 +16,7 @@
 // Configuration
 define('MAX_FILE_SIZE', 500 * 1024); // 500KB
 define('TEMP_DIR', __DIR__ . '/tmp');  // Isolated directory
-define('PYTHON_SCRIPT', dirname(__DIR__) . '/word_count_reporter.py');
+define('PYTHON_SCRIPT', dirname(__DIR__) . '/src/word_count_reporter/cli.py');
 define('ALLOWED_EXTENSIONS', ['txt']);
 
 // Ensure temp directory exists

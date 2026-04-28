@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "word-count-reporter"
+dynamic = ["version"]
+description = "Generate HTML word count reports from text and DOCX documents"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Ivan K.", email = "ivan.kzv@protonmail.com"}
+]
+maintainers = [
+    {name = "Ivan K.", email = "ivan.kzv@protonmail.com"}
+]
+keywords = ["word-count", "report", "docx", "text", "html"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Text Processing",
+    "Topic :: Text Processing :: Markup :: HTML",
+]
+
+dependencies = [
+    "beautifulsoup4>=4.11.1",
+    "python-docx>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "build>=1.0",
+    "twine>=4.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/bkuz114/word_count_reporter"
+"Bug Reports" = "https://github.com/bkuz114/word_count_reporter/issues"
+"Source" = "https://github.com/bkuz114/word_count_reporter"
+
+[project.scripts]
+word-count-reporter = "word_count_reporter.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "word_count_reporter.__version__"}
+
+[tool.setuptools.package-data]
+"word_count_reporter" = [
+    "templates/*.html",
+    "templates/assets/*.css",
+    "templates/assets/*.js",
+]
+
+# Optional: pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+# Optional: coverage configuration
+[tool.coverage.run]
+source = ["word_count_reporter.py"]
+omit = ["tests/*", "web_ui/*", "example_files/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "pass",
+]
