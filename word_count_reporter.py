@@ -27,6 +27,7 @@ Output:
 from datetime import datetime as dt
 from docx import Document
 from bs4 import BeautifulSoup
+from typing import Any, Optional, Union
 import webbrowser
 import sys
 import argparse
@@ -44,7 +45,7 @@ REPORT_DIR = Path(
 ENC = "utf-8"
 
 
-def main(args):
+def main(args: list[str]) -> None:
     """Main entry point: parse arguments, process files, generate report.
 
     Args:
@@ -220,7 +221,7 @@ def main(args):
     webbrowser.open(report)
 
 
-def parse_input_file(filepath):
+def parse_input_file(filepath: str) -> tuple[str, list[list[str]]]:
     """Parse the input file and extract title and chapter file paths.
 
     Args:
@@ -242,7 +243,9 @@ def parse_input_file(filepath):
     return title, my_data
 
 
-def make_report(title, file_info_list, outfile, force):
+def make_report(
+    title: str, file_info_list: list[list[str]], outfile: str, force: bool
+) -> str:
     """Augment file info with word counts and generate the report.
 
     Args:
@@ -259,7 +262,7 @@ def make_report(title, file_info_list, outfile, force):
     return generate_report(title, file_info_list, outfile, force)
 
 
-def timestamp():
+def timestamp() -> str:
     """Return a timestamp string safe for use in filenames.
 
     Returns:
@@ -271,7 +274,7 @@ def timestamp():
     return str(ct)
 
 
-def date_string():
+def date_string() -> str:
     """human readable/useful date string"""
     date = dt.now()
     formatted_date = date.strftime("%B %d, %Y")
@@ -282,7 +285,7 @@ def date_string():
     return formatted_date + ", " + formatted_time
 
 
-def file_contents(filepath):
+def file_contents(filepath: str) -> str:
     """Read and return the entire contents of a text file.
 
     Args:
@@ -303,7 +306,7 @@ def file_contents(filepath):
     return file_str
 
 
-def write_file(filepath, data, force):
+def write_file(filepath: str, data: str, force: bool) -> None:
     """Write data to a file, creating directories as needed.
 
     Args:
@@ -337,7 +340,9 @@ def write_file(filepath, data, force):
     wr.close()
 
 
-def generate_report(title, word_count_info, outfile, force):
+def generate_report(
+    title: str, word_count_info: list[list[Any]], outfile: str, force: bool
+) -> str:
     """Generate an HTML report from word count data.
 
     Args:
@@ -372,7 +377,7 @@ def generate_report(title, word_count_info, outfile, force):
     return outfile
 
 
-def file_url(filepath):
+def file_url(filepath: str) -> str:
     """Convert a local file path to a file:// URL for HTML links.
 
     Args:
@@ -386,7 +391,7 @@ def file_url(filepath):
     return filestr
 
 
-def number(numstr):
+def number(numstr: Union[int, str]) -> str:
     """Format a number with thousand separators.
 
     Args:
@@ -398,7 +403,7 @@ def number(numstr):
     return f"{numstr:,}"
 
 
-def word_count_row(file_info, row_num):
+def word_count_row(file_info: list[Any], row_num: int) -> BeautifulSoup:
     """Create an HTML table row for a single chapter's word count.
 
     Args:
@@ -421,7 +426,7 @@ def word_count_row(file_info, row_num):
     )
 
 
-def total_row(total):
+def total_row(total: int) -> BeautifulSoup:
     """Create an HTML table row for the total word count.
 
     Args:
@@ -439,7 +444,7 @@ def total_row(total):
     )
 
 
-def word_count_docx(filepath):
+def word_count_docx(filepath: str) -> int:
     """Count words in a .docx file.
 
     Args:
@@ -456,7 +461,7 @@ def word_count_docx(filepath):
     return num_words
 
 
-def word_count_txt(filepath):
+def word_count_txt(filepath: str) -> int:
     """Count words in a .txt file.
 
     Args:
@@ -473,7 +478,7 @@ def word_count_txt(filepath):
     return num_words
 
 
-def file_word_count(filepath):
+def file_word_count(filepath: str) -> int:
     """Dispatch word counting based on file extension.
 
     Args:
@@ -502,7 +507,7 @@ def file_word_count(filepath):
         )
 
 
-def backup(files_info, report_dir):
+def backup(files_info: list[list[str]], report_dir: str) -> list[str]:
     """Back up all source files to a subdirectory.
 
     Args:
@@ -522,7 +527,7 @@ def backup(files_info, report_dir):
     return destfiles
 
 
-def backup_file(chapter_filepath, chapter_name, backup_dir):
+def backup_file(chapter_filepath: str, chapter_name: str, backup_dir: str) -> str:
     """Back up a single file, converting .docx to .txt if needed.
 
     Args:
@@ -562,7 +567,7 @@ def backup_file(chapter_filepath, chapter_name, backup_dir):
     return str(dest_filepath)
 
 
-def docx_to_txt(srcpath, destpath):
+def docx_to_txt(srcpath: str, destpath: str) -> None:
     """Convert a .docx file to a plain text file.
 
     Args:
