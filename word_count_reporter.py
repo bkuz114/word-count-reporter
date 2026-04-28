@@ -128,7 +128,7 @@ def main(args: list[str]) -> None:
 
     ifile = args.input
     if not ifile.exists():
-        raise Exception("Input file {} does not exist!".format(str(ifile)))
+        raise Exception(f"Input file {str(ifile)} does not exist!")
     if not ifile.is_absolute():
         ifile = (SCRIPT_DIR / ifile).resolve()
 
@@ -194,9 +194,9 @@ def main(args: list[str]) -> None:
     if not report_file.is_absolute():
         report_file = SCRIPT_DIR / report_file
 
-    logger.debug("report dir     : " + str(report_dir))
-    logger.debug("report filename: " + report_filename)
-    logger.debug("Report file    : " + str(report_file))
+    logger.debug(f"report dir     : {str(report_dir)}")
+    logger.debug(f"report filename: {report_filename}")
+    logger.debug(f"Report file    : {str(report_file)}")
 
     # if the report dir doesnt exist, create it
     report_dir.mkdir(parents=True, exist_ok=True)
@@ -287,7 +287,7 @@ def date_string() -> str:
     time = dt.now()
     formatted_time = time.strftime("%I:%M:%S %p")
 
-    return formatted_date + ", " + formatted_time
+    return f"{formatted_date}, {formatted_time}"
 
 
 def file_contents(filepath: Path) -> str:
@@ -303,7 +303,7 @@ def file_contents(filepath: Path) -> str:
         Exception: If the file does not exist.
     """
     if not filepath.exists():
-        raise Exception("{} doesn't exist".format(str(filepath)))
+        raise Exception(f"{str(filepath)} doesn't exist")
     file = open(filepath, "r", encoding=ENC)
     file_str = file.read()
     file.close()
@@ -324,12 +324,10 @@ def write_file(filepath: Path, data: str, force: bool) -> None:
         Exception: If file exists and force is False.
     """
     if not filepath.is_absolute():
-        raise Exception("Output file {} is not absolute!".format(str(filepath)))
+        raise Exception(f"Output file {str(filepath)} is not absolute!")
     if filepath.exists() and not force:
         raise Exception(
-            "Output file {} exists! "
-            "Use --FORCE / -F"
-            " to overwrite".format(str(filepath))
+            f"Output file {str(filepath)} exists! " "Use --FORCE / -F" " to overwrite"
         )
     # create dirs in path if they don't exist
     basedir = filepath.parent
@@ -422,15 +420,19 @@ def word_count_row(file_info: list[Any], row_num: int) -> BeautifulSoup:
     Returns:
         BeautifulSoup: HTML element representing the table row.
     """
+    chapter_name = file_info[0]
+    chapter_path = file_url(file_info[1])
+    word_count = number(file_info[2])
+
     return BeautifulSoup(
-        """<tr>
-                         <td>{}</td>
-                         <td>{}</td>
-                         <td><a href="{}" target=_blank>file</a></td>
-                         <td>{} words</td>
-                         </tr>""".format(
-            row_num, file_info[0], file_url(file_info[1]), number(file_info[2])
-        ),
+        f"""
+        <tr>
+            <td>{row_num}</td>
+            <td>{chapter_name}</td>
+            <td><a href="{chapter_path}" target=_blank>file</a></td>
+            <td>{word_count} words</td>
+        </tr>
+        """,
         "html.parser",
     )
 
@@ -445,10 +447,12 @@ def total_row(total: int) -> BeautifulSoup:
         BeautifulSoup: HTML element representing the total row.
     """
     return BeautifulSoup(
-        """<tr id="total">
-                         <td colspan="3">Total</td>
-                         <td>{}</td>
-                         </tr>""".format(number(total)),
+        f"""
+        <tr id="total">
+            <td colspan="3">Total</td>
+            <td>{number(total)}</td>
+        </tr>
+        """,
         "html.parser",
     )
 
@@ -500,7 +504,7 @@ def file_word_count(filepath: Path) -> int:
         Exception: If file does not exist or extension is not supported.
     """
     if not filepath.exists():
-        raise Exception("File {} does not exist!".format(str(filepath)))
+        raise Exception(f"File {str(filepath)} does not exist!")
 
     extension = filepath.suffix
     if extension == ".txt":
@@ -509,9 +513,9 @@ def file_word_count(filepath: Path) -> int:
         return word_count_docx(filepath)
     else:
         raise Exception(
-            "invalid filetype {}. "
+            f"invalid filetype {extension}. "
             "Only .txt and .docx "
-            "currently supported".format(extension)
+            "currently supported"
         )
 
 
@@ -551,9 +555,7 @@ def backup_file(chapter_filepath: Path, chapter_name: str, backup_dir: Path) -> 
         Exception: If file extension is not .txt or .docx.
     """
     logger.debug(
-        "\n\n*chapter name: {}\n* srcfile: {}\n* dest dir: {}".format(
-            chapter_name, str(chapter_filepath), str(backup_dir)
-        )
+        f"\n\n*chapter name: {chapter_name}\n* srcfile: {str(chapter_filepath)}\n* dest dir: {str(backup_dir)}"
     )
     extension = chapter_filepath.suffix
     dest_filepath = None  # will be a Path object
@@ -569,7 +571,7 @@ def backup_file(chapter_filepath: Path, chapter_name: str, backup_dir: Path) -> 
         shutil.copyfile(str(chapter_filepath), str(dest_filepath))
     else:
         raise Exception("file to backup isn't .docx or .txt")
-    logger.debug("\tFile backed up to: " + str(dest_filepath))
+    logger.debug(f"\tFile backed up to: {str(dest_filepath)}")
     return dest_filepath
 
 
@@ -585,14 +587,13 @@ def docx_to_txt(srcpath: Path, destpath: Path) -> None:
     """
     if not srcpath.exists():
         raise Exception(
-            "Trying to convert a docx to txt, but the docx "
-            " file doesn't exist: {}".format(str(srcpath))
+            f"Trying to convert a docx to txt, but the docx file doesn't exist: {str(srcpath)}"
         )
     if destpath.exists():
         raise Exception(
-            "Trying to convert a docx to a text file, "
-            "but proposed destination path already "
-            "exists.\n\nsrcfile:{}\ndest path:{}".format(str(srcpath), str(destpath))
+            f"Trying to convert a docx to a text file, "
+            f"but proposed destination path already exists.\n\n"
+            f"srcfile: {str(srcpath)}\ndest path: {str(destpath)}"
         )
 
     # need to create parent dir of file writing to or python will error
