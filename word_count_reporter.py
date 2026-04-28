@@ -132,7 +132,7 @@ def main(args: list[str]) -> None:
     # note: input_data is array of arrays.
     # each inner array corresponds to a chapter.
     # each inner array is [chap name, path to file]
-    title, input_data = parse_input_file(str(ifile))
+    title, input_data = parse_input_file(ifile)
 
     # generic output file and possibly folder
     # (if --backup, will encorporate a folder)
@@ -204,7 +204,7 @@ def main(args: list[str]) -> None:
     logger.debug(input_data)
 
     if args.backup:
-        backup_files = backup(input_data, str(report_dir))
+        backup_files = backup(input_data, report_dir)
         new_idata = []
         logger.debug("loop through and back up files")
         # zip allows you to loop through 2 lists at once
@@ -215,50 +215,51 @@ def main(args: list[str]) -> None:
     logger.debug("new input data:")
     logger.debug(input_data)
 
-    report = make_report(title, input_data, str(report_file), args.FORCE)
+    report = str(make_report(title, input_data, report_file, args.FORCE))
 
     logger.info(report)
     webbrowser.open(report)
 
 
-def parse_input_file(filepath: str) -> tuple[str, list[list[str]]]:
+def parse_input_file(filepath: Path) -> tuple[str, list[list[Any]]]:
     """Parse the input file and extract title and chapter file paths.
 
     Args:
-        filepath (str): Path to the input file.
+        filepath (Path): Path to the input file.
 
     Returns:
         tuple: (title, my_data) where:
             - title (str): Project title from input file.
-            - my_data (list): List of [chapter_name, file_path] pairs.
+            - my_data (list): List of [chapter_name (str), file_path (Path)] pairs.
     """
-    title, file_data, inputfile_had_parts = inputfile.parse_data_file(filepath)
+    title, file_data, inputfile_had_parts = inputfile.parse_data_file(str(filepath))
     my_data = []
     for data in file_data:
         filename = data[1]  # chapter name
-        filepath = data[2]  # filepath to chapter
+        filepath = Path(data[2])  # filepath to chapter
         if not filename:  # if no chapter name, make it the name of the file
-            filename = Path(filepath).name
+            filename = filepath.name
         my_data.append([filename, filepath])
     return title, my_data
 
 
 def make_report(
-    title: str, file_info_list: list[list[str]], outfile: str, force: bool
-) -> str:
+    title: str, file_info_list: list[list[Any]], outfile: Path, force: bool
+) -> Path:
     """Augment file info with word counts and generate the report.
 
     Args:
         title (str): Project title.
-        file_info_list (list): List of [chapter_name, file_path] pairs.
-        outfile (str): Output HTML file path.
+        file_info_list (list): List of [chapter_name (str), file_path (Path)] pairs.
+        outfile (Path): Output HTML file path.
         force (bool): Overwrite output file if exists.
 
     Returns:
-        str: Path to the generated report file (returned by generate_report).
+        Path: Path to the generated report file (returned by generate_report).
     """
     for file_info in file_info_list:
-        file_info.append(file_word_count(file_info[1]))
+        filepath = Path(file_info[1])
+        file_info.append(file_word_count(filepath))
     return generate_report(title, file_info_list, outfile, force)
 
 
@@ -285,11 +286,11 @@ def date_string() -> str:
     return formatted_date + ", " + formatted_time
 
 
-def file_contents(filepath: str) -> str:
+def file_contents(filepath: Path) -> str:
     """Read and return the entire contents of a text file.
 
     Args:
-        filepath (str): Path to the file to read.
+        filepath (Path): Path to the file to read.
 
     Returns:
         str: File contents.
@@ -297,20 +298,19 @@ def file_contents(filepath: str) -> str:
     Raises:
         Exception: If the file does not exist.
     """
-    path = Path(filepath)
-    if not path.exists():
-        raise Exception("{} doesn't exist".format(str(path)))
-    file = open(path, "r", encoding=ENC)
+    if not filepath.exists():
+        raise Exception("{} doesn't exist".format(str(filepath)))
+    file = open(filepath, "r", encoding=ENC)
     file_str = file.read()
     file.close()
     return file_str
 
 
-def write_file(filepath: str, data: str, force: bool) -> None:
+def write_file(filepath: Path, data: str, force: bool) -> None:
     """Write data to a file, creating directories as needed.
 
     Args:
-        filepath (str): Absolute path to the output file.
+        filepath (Path): Absolute path to the output file.
         data (str): Content to write.
         force (bool): If True, overwrite existing file. If False, require
                       that the file does not already exist.
@@ -319,44 +319,43 @@ def write_file(filepath: str, data: str, force: bool) -> None:
         Exception: If filepath is not absolute.
         Exception: If file exists and force is False.
     """
-    path = Path(filepath)
-    if not path.is_absolute():
-        raise Exception("Output file {} is not absolute!".format(str(path)))
-    if path.exists() and not force:
+    if not filepath.is_absolute():
+        raise Exception("Output file {} is not absolute!".format(str(filepath)))
+    if filepath.exists() and not force:
         raise Exception(
             "Output file {} exists! "
             "Use --FORCE / -F"
-            " to overwrite".format(str(path))
+            " to overwrite".format(str(filepath))
         )
     # create dirs in path if they don't exist
-    basedir = path.parent
+    basedir = filepath.parent
     basedir.mkdir(parents=True, exist_ok=True)
 
     if force:
-        wr = open(path, "w", encoding=ENC)
+        wr = open(filepath, "w", encoding=ENC)
     else:
-        wr = open(path, "x", encoding=ENC)
+        wr = open(filepath, "x", encoding=ENC)
     wr.write(data)
     wr.close()
 
 
 def generate_report(
-    title: str, word_count_info: list[list[Any]], outfile: str, force: bool
-) -> str:
+    title: str, word_count_info: list[list[Any]], outfile: Path, force: bool
+) -> Path:
     """Generate an HTML report from word count data.
 
     Args:
         title (str): Project title.
-        word_count_info (list): List of [chapter_name, file_path, word_count].
-        outfile (str): Output HTML file path.
+        word_count_info (list): List of [chapter_name (str), file_path (Path), word_count (int)].
+        outfile (Path): Output HTML file path.
         force (bool): Overwrite output file if exists.
 
     Returns:
-        str: Path to the generated report file.
+        Path: Path to the generated report file.
     """
     date = date_string()
 
-    contents = file_contents("report_template.html")
+    contents = file_contents(Path("report_template.html"))
 
     contents = contents.replace("%title%", title)
     contents = contents.replace("%date%", date)
@@ -377,16 +376,16 @@ def generate_report(
     return outfile
 
 
-def file_url(filepath: str) -> str:
+def file_url(filepath: Path) -> str:
     """Convert a local file path to a file:// URL for HTML links.
 
     Args:
-        filepath (str): Local file path (backslashes allowed).
+        filepath (Path): Local file path (backslashes allowed).
 
     Returns:
         str: URL in format file:///C:/path/to/file.
     """
-    filestr = filepath.replace("\\", "/")
+    filestr = str(filepath).replace("\\", "/")
     filestr = "file:///" + filestr
     return filestr
 
@@ -407,7 +406,7 @@ def word_count_row(file_info: list[Any], row_num: int) -> BeautifulSoup:
     """Create an HTML table row for a single chapter's word count.
 
     Args:
-        file_info (list): [chapter_name, file_path, word_count].
+        file_info (list): [chapter_name (str), file_path (Path), word_count (int)].
         row_num (int): Row number (1-indexed) for display.
 
     Returns:
@@ -444,16 +443,16 @@ def total_row(total: int) -> BeautifulSoup:
     )
 
 
-def word_count_docx(filepath: str) -> int:
+def word_count_docx(filepath: Path) -> int:
     """Count words in a .docx file.
 
     Args:
-        filepath (str): Path to the .docx file.
+        filepath (Path): Path to the .docx file.
 
     Returns:
         int: Number of words (split on whitespace per paragraph).
     """
-    document = Document(filepath)
+    document = Document(str(filepath))
     num_words = 0
     for paragraph in document.paragraphs:
         words = paragraph.text.split()
@@ -461,11 +460,11 @@ def word_count_docx(filepath: str) -> int:
     return num_words
 
 
-def word_count_txt(filepath: str) -> int:
+def word_count_txt(filepath: Path) -> int:
     """Count words in a .txt file.
 
     Args:
-        filepath (str): Path to the .txt file.
+        filepath (Path): Path to the .txt file.
 
     Returns:
         int: Number of words (split on whitespace per line).
@@ -478,11 +477,11 @@ def word_count_txt(filepath: str) -> int:
     return num_words
 
 
-def file_word_count(filepath: str) -> int:
+def file_word_count(filepath: Path) -> int:
     """Dispatch word counting based on file extension.
 
     Args:
-        filepath (str): Path to the file (.txt or .docx).
+        filepath (Path): Path to the file (.txt or .docx).
 
     Returns:
         int: Word count.
@@ -490,15 +489,14 @@ def file_word_count(filepath: str) -> int:
     Raises:
         Exception: If file does not exist or extension is not supported.
     """
-    path = Path(filepath)
-    if not path.exists():
-        raise Exception("File {} does not exist!".format(str(path)))
+    if not filepath.exists():
+        raise Exception("File {} does not exist!".format(str(filepath)))
 
-    extension = path.suffix
+    extension = filepath.suffix
     if extension == ".txt":
-        return word_count_txt(str(path))
+        return word_count_txt(filepath)
     if extension == ".docx":
-        return word_count_docx(str(path))
+        return word_count_docx(filepath)
     else:
         raise Exception(
             "invalid filetype {}. "
@@ -507,93 +505,90 @@ def file_word_count(filepath: str) -> int:
         )
 
 
-def backup(files_info: list[list[str]], report_dir: str) -> list[str]:
+def backup(files_info: list[list[Any]], report_dir: Path) -> list[Path]:
     """Back up all source files to a subdirectory.
 
     Args:
-        files_info (list): List of [chapter_name, file_path] pairs.
-        report_dir (str): Directory where the report will be saved; backups
+        files_info (list): List of [chapter_name (str), file_path (Path)] pairs.
+        report_dir (Path): Directory where the report will be saved; backups
                           are placed in a "files" subdirectory.
 
     Returns:
-        list: Paths to the backed-up files, in the same order as files_info.
+        list[Path]: Paths to the backed-up files, in the same order as files_info.
     """
     destfiles = []
-    backup_dir = Path(report_dir) / "files"
+    backup_dir = report_dir / "files"
     for file_info in files_info:
         # 'backup' the file and add filepath of
         # backed up file to destfiles
-        destfiles.append(backup_file(file_info[1], file_info[0], str(backup_dir)))
+        destfiles.append(backup_file(Path(file_info[1]), file_info[0], backup_dir))
     return destfiles
 
 
-def backup_file(chapter_filepath: str, chapter_name: str, backup_dir: str) -> str:
+def backup_file(chapter_filepath: Path, chapter_name: str, backup_dir: Path) -> Path:
     """Back up a single file, converting .docx to .txt if needed.
 
     Args:
-        chapter_filepath (str): Path to the source file.
+        chapter_filepath (Path): Path to the source file.
         chapter_name (str): Name of the chapter (used for naming .txt output
                             when converting from .docx).
-        backup_dir (str): Destination directory for the backup.
+        backup_dir (Path): Destination directory for the backup.
 
     Returns:
-        str: Path to the backed-up file.
+        Path: Path to the backed-up file.
 
     Raises:
         Exception: If file extension is not .txt or .docx.
     """
     logger.debug(
         "\n\n*chapter name: {}\n* srcfile: {}\n* dest dir: {}".format(
-            chapter_name, chapter_filepath, backup_dir
+            chapter_name, str(chapter_filepath), str(backup_dir)
         )
     )
-    src_path = Path(chapter_filepath)
-    dest_dir = Path(backup_dir)
-    extension = src_path.suffix
+    extension = chapter_filepath.suffix
     dest_filepath = None  # will be a Path object
     if extension == ".docx":
         filename_no_ext = Path(
             chapter_name
         ).stem  # explore: isnt' chapter_name just a simple string (not a path)?
-        dest_filepath = dest_dir / Path(filename_no_ext + ".txt")
-        docx_to_txt(str(src_path), str(dest_filepath))
+        dest_filepath = backup_dir / Path(filename_no_ext + ".txt")
+        docx_to_txt(chapter_filepath, dest_filepath)
     elif extension == ".txt":
-        filename = src_path.name
-        dest_filepath = dest_dir / filename
-        shutil.copyfile(str(src_path), str(dest_filepath))
+        filename = chapter_filepath.name
+        dest_filepath = backup_dir / filename
+        shutil.copyfile(str(chapter_filepath), str(dest_filepath))
     else:
         raise Exception("file to backup isn't .docx or .txt")
     logger.debug("\tFile backed up to: " + str(dest_filepath))
-    return str(dest_filepath)
+    return dest_filepath
 
 
-def docx_to_txt(srcpath: str, destpath: str) -> None:
+def docx_to_txt(srcpath: Path, destpath: Path) -> None:
     """Convert a .docx file to a plain text file.
 
     Args:
-        srcpath (str): Path to the source .docx file.
-        destpath (str): Path for the output .txt file.
+        srcpath (Path): Path to the source .docx file.
+        destpath (Path): Path for the output .txt file.
 
     Raises:
         Exception: If srcpath does not exist or destpath already exists.
     """
-    if not Path(srcpath).exists():
+    if not srcpath.exists():
         raise Exception(
             "Trying to convert a docx to txt, but the docx "
-            " file doesn't exist: {}".format(srcpath)
+            " file doesn't exist: {}".format(str(srcpath))
         )
-    if Path(destpath).exists():
+    if destpath.exists():
         raise Exception(
             "Trying to convert a docx to a text file, "
             "but proposed destination path already "
-            "exists.\n\nsrcfile:{}\ndest path:{}".format(srcpath, destpath)
+            "exists.\n\nsrcfile:{}\ndest path:{}".format(str(srcpath), str(destpath))
         )
 
     # need to create parent dir of file writing to or python will error
-    dest = Path(destpath)
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    with open(dest, "w", encoding=ENC) as destfile:
-        document = Document(srcpath)
+    destpath.parent.mkdir(parents=True, exist_ok=True)
+    with open(destpath, "w", encoding=ENC) as destfile:
+        document = Document(str(srcpath))
         for paragraph in document.paragraphs:
             destfile.write(paragraph.text + "\n")
 
