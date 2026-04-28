@@ -26,7 +26,7 @@ one line:
 
 ## Run tool
 
-`python word_count_reporter.py -i INPUT`
+`python word_count_reporter.py INPUT`
 
 **Note**: Input is format of book builder input file.
 
@@ -34,4 +34,4 @@ one line:
 
 An example using the included example intputfile / files. Creates a report with the word counts of these example files.
 
-`python word_count_reporter.py -i example_inputfile.txt`
+`python word_count_reporter.py example_inputfile.txt`
