@@ -367,14 +367,20 @@ def generate_report(
 
     soup = BeautifulSoup(contents.encode(ENC), "html.parser")
 
-    # table = soup.find("table", {"id":"table"})
+    # Get <tbody> in word-count-table
     table = soup.find(attrs={"id": "word-count-table"})
+    if not table:
+        raise RuntimeError("Could not find table with id='word-count-table'")
+    tbody = table.find("tbody")
+    if not tbody:
+        raise RuntimeError("Table missing required <tbody> element")
 
+    # append rows directly to <tbody>
     total_words = 0
     for idx, count_info in enumerate(word_count_info):
-        table.append(word_count_row(count_info, idx + 1))
+        tbody.append(word_count_row(count_info, idx + 1))
         total_words += count_info[2]
-    table.append(total_row(total_words))
+    tbody.append(total_row(total_words))
 
     pretty_soup = soup.prettify(formatter="html")
     write_file(outfile, pretty_soup, force)
