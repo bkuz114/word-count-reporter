@@ -189,7 +189,7 @@ def main(args: list[str]) -> None:
             report_dir = output_path.parent
             report_filename = output_path.name
     else:  # --output arg not given - use default
-        report_dir = REPORT_DIR / title
+        report_dir = REPORT_DIR / title  # title was returned from parse_input_file
         report_filename = generic_filename
         if (
             args.backup
