@@ -166,7 +166,8 @@ def main(args: list[str]) -> None:
     report_filename = None  # name of the report
 
     if args.output:  # --output arg given
-        output_path = args.output
+        # resolve rel. users cwd
+        output_path = args.output.resolve()
         ext = output_path.suffix
         if args.backup:  # --backup given: --output should be a folder
             logger.debug("op #1: (--output, --backup)")
