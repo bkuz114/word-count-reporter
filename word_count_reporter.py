@@ -134,11 +134,10 @@ def main(args: list[str]) -> None:
     # console.setFormatter(logging.Formatter('%(name)-12s: %(message)s'))
     logger.addHandler(console)
 
-    ifile = args.input
+    # Get input file.
+    ifile = args.input.resolve()  # resolves rel user's cwd
     if not ifile.exists():
         raise Exception(f"Input file {str(ifile)} does not exist!")
-    if not ifile.is_absolute():
-        ifile = (SCRIPT_DIR / ifile).resolve()
 
     # parse the input file
     # note: input_data is array of arrays.
