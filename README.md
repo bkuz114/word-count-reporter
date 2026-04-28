@@ -82,10 +82,10 @@ A minimal web interface is included for users who prefer a GUI. The interface al
 
 #### Quick Start
 
-From the project directory, start a PHP web server:
+From the `web_ui` directory, start a PHP web server:
 
 ```bash
-php -S localhost:8000
+cd web_ui && php -S localhost:8000
 ```
 
 Then open `http://localhost:8000/index.html` in your browser.
@@ -189,7 +189,7 @@ Lists the documents to process. Each line follows the format:
 ### Command line
 
 ```bash
-python word_count_reporter.py example_inputfile.txt
+python word_count_reporter.py example_files/example_inputfile.txt
 ```
 
 This generates an HTML report with word counts for all files listed in `example_inputfile.txt`.
@@ -197,7 +197,7 @@ This generates an HTML report with word counts for all files listed in `example_
 ### With backup
 
 ```bash
-python word_count_reporter.py example_inputfile.txt --backup
+python word_count_reporter.py example_files/example_inputfile.txt --backup
 ```
 
 Creates a directory containing both the HTML report and plain-text copies of all source files.
@@ -205,26 +205,26 @@ Creates a directory containing both the HTML report and plain-text copies of all
 ### Custom output location
 
 ```bash
-python word_count_reporter.py example_inputfile.txt -o my_report.html
+python word_count_reporter.py example_files/example_inputfile.txt -o my_report.html
 ```
 
 ### Overwrite existing report
 
 ```bash
-python word_count_reporter.py example_inputfile.txt -o my_report.html -F
+python word_count_reporter.py example_files/example_inputfile.txt -o my_report.html -F
 ```
 
 ### Using project title in filename
 
 ```bash
-python word_count_reporter.py example_inputfile.txt --usetitle
+python word_count_reporter.py example_files/example_inputfile.txt --usetitle
 ```
 
 Generates a file like `My_Project-word-count-report_2025_01_15-14_30_00.html`.
 
 ### Web interface
 
-1. Start the PHP server: `php -S localhost:8000`
+1. Start the PHP server: `cd web_ui && php -S localhost:8000`
 2. Open `http://localhost:8000/index.html`
 3. Upload your input file (with absolute paths)
 4. Optionally check "Back up source files as text"
