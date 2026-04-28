@@ -36,6 +36,8 @@ import shutil
 import logging
 from pathlib import Path
 
+__version__ = "1.0.0"
+
 logger = logging.getLogger(__name__)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -115,6 +117,7 @@ def main(args: list[str]) -> None:
         default=False,
         help="Overwrite output file if exists",
     )
+    parser.add_argument("--version", action="version", version=f"{__version__}")
     args = parser.parse_args(args)
 
     # a logger for my debugging purposes
