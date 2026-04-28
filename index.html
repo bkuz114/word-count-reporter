@@ -1,47 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="./favicon.ico">
-    <style>
-        body {
-            background-color: dodgerblue;
-            font-size: 20px;
-            padding: 5px 0px 0px 15px;
-        }
-
-        input {
-            font-size: 20px;
-        }
-
-        #wrapper {
-            padding-top: 20px;
-        }
-
-        #backup {
-            margin-top: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <title>Word Count Reporter</title>
 </head>
 
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>Word Count Reporter</h1>
+            <p>Generate word count reports from text and DOCX documents</p>
+        </div>
+        <div class="content">
+            <form action="upload.php" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="fileToUpload">Input File</label>
+                    <input type="file" name="fileToUpload" id="fileToUpload" accept=".txt" required>
+                    <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">Select a .txt input file describing your document collection</small>
+                </div>
 
-    <h1>Select input file to generate report from.</h1>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" name="backup" id="backup">
+                    <label for="backup">Back up source files as text</label>
+                </div>
 
-    <div id="wrapper">
-        <form action="upload.php" method="post" enctype="multipart/form-data">
-            <input type="file" name="fileToUpload" id="fileToUpload">
-            <br>
-            <label for="backup">Back up files</label>
-            <input type="checkbox" name="backup" id="backup">
-            <br><br>
-            <input type="submit" value="Generate Report" name="submit" id="submit" disabled>
-        </form>
+                <button type="submit" name="submit" id="submit" disabled>Generate Report →</button>
+            </form>
+        </div>
     </div>
 
     <script>
         document.getElementById("fileToUpload").onchange = function() {
-            document.getElementById("submit").disabled = false;
+            document.getElementById("submit").disabled = !this.files.length;
         };
     </script>
 </body>

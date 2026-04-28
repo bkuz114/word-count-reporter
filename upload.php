@@ -13,46 +13,40 @@ if (count($failures) === 0) {
 	run_report();
 }
 
-$result = '<div id="result">';
-if (count($failures) === 0) {
-	$result .= '<div class="success">
-					<h1>Success! Report generated at:</h1>
-					<br>
-					<h2>'.$report_path.'</h2>
-				</div>';
-} else {
-	$result .= '<div class="failed">
-					<h1>Failed! Failure reasons:</h1>
-				<ul>';
-	foreach ($failures as $x) {
-  		$result .= "<li class='failure-messages'>$x</li>";
-	}
-	$result .= "</ul></div>";
-}
-$result .= "</div>";
-
-echo '
-<html>
+?>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-	<title>Result</title>
-	<style>
-		body {
-			background-color: gold;
-		}
-		#result {
-			font-size: 18px;
-			padding: 15px;
-		}
-		.failed {
-			color: red;
-		}
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Word Count Reporter - Result</title>
 </head>
 <body>
-	<h1>Result:</h1>
-'.$result.'
+    <div class="container">
+        <div class="header">
+            <h1>Word Count Reporter</h1>
+            <p>Report Generation Result</p>
+        </div>
+        <div class="content">
+            <div class="result-card <?php echo count($failures) === 0 ? "success" : "failed"; ?>">
+                <h2><?php echo count($failures) === 0 ? "✓ Success" : "✗ Failed"; ?></h2>
+                <?php if (count($failures) === 0): ?>
+                    <div class="report-path">📄 <?php echo htmlspecialchars($report_path); ?></div>
+                <?php else: ?>
+                    <ul class="failure-list">
+                        <?php foreach ($failures as $x): ?>
+                            <li>⚠️ <?php echo htmlspecialchars($x); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </div>
+            <a href="index.html" class="back-link">← Upload Another File</a>
+        </div>
+    </div>
 </body>
-</html>';
+</html>
+<?php
 
 function check_txt() {
 	global $failures;
@@ -116,4 +110,3 @@ function run_report() {
     }
 }
 ?>
-
