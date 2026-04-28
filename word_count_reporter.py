@@ -31,7 +31,7 @@ from typing import Any, Optional, Union
 import webbrowser
 import sys
 import argparse
-import inputfile
+import utils.inputfile as inputfile
 import shutil
 import logging
 from pathlib import Path
@@ -40,8 +40,9 @@ logger = logging.getLogger(__name__)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPORT_DIR = SCRIPT_DIR / "reports"
+TEMPLATES_DIR = SCRIPT_DIR / "report_templates"
 # dir where js and css to embed live
-ASSETS_SRC = SCRIPT_DIR / "assets"
+ASSETS_SRC = TEMPLATES_DIR / "assets"
 
 ENC = "utf-8"
 
@@ -357,7 +358,7 @@ def generate_report(
     """
     date = date_string()
 
-    contents = file_contents(Path("report_template.html"))
+    contents = file_contents(TEMPLATES_DIR / "report_template.html")
     # css and js to embed
     css_contents = file_contents(ASSETS_SRC / "style.css")
     js_contents = file_contents(ASSETS_SRC / "scripts.js")
