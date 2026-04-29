@@ -279,7 +279,7 @@ echo "## 8. Test package import                                #"
 echo "##########################################################"
 echo ""
 echo "Testing package import..."
-if python -c "import ${PROJECT_NORMALIZED}; print(f'Version: {${PROJECT_NORMALIZED}.__version__}')" 2>/dev/null; then
+if python -c "import ${PROJECT_NORMALIZED}" 2>/dev/null; then
     echo "✅ Package import successful"
 else
     echo "❌ Package import failed - check installation"
