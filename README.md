@@ -87,10 +87,10 @@ Whether installed via pip or run from source, the same options apply:
 | `INPUTFILE` | Input file describing the project title and chapter files |
 | `-o OUTPUT`, `--output OUTPUT` | Output file path. If not supplied, auto-generated from title and timestamp. When used with `--backup`, this specifies a directory. |
 | `-b`, `--backup` | Backup source files as text files in the report directory. `.docx` files are converted to `.txt`; `.txt` files are copied as-is. |
-| `-t`, `--notimestamp` | Omit timestamp from auto-generated output filename. |
-| `-u`, `--usetitle` | Use project title in auto-generated output filename. |
+| `-t`, `--no-timestamp` | Omit timestamp from auto-generated output filename. |
+| `-u`, `--use-title` | Use project title in auto-generated output filename. |
 | `-F`, `--FORCE` | Overwrite output file if it already exists. |
-| `--loglevel {debug,info}` | Set logging verbosity (default: `info`). |
+| `--log-level {debug,info}` | Set logging verbosity (default: `info`). |
 | `-h`, `--help` | Show help message and exit. |
 | `--version` | Show version number and exit. |
 
@@ -234,7 +234,7 @@ word-count-reporter example_inputfile.txt -o my_report.html -F
 
 # Use project title in filename
 # Generates a file like `My_Project-word-count-report_2025_01_15-14_30_00.html`.
-word-count-reporter example_inputfile.txt --usetitle
+word-count-reporter example_inputfile.txt --use-title
 ```
 
 ### From source (no installation)
