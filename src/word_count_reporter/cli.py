@@ -111,6 +111,11 @@ def main() -> None:
         help="Don't timestamp output file",
     )
     parser.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="Don't open browser once report is generated.",
+    )
+    parser.add_argument(
         "-u",
         "--usetitle",
         required=False,
@@ -241,7 +246,9 @@ def main() -> None:
     report = str(make_report(title, input_data, report_file, args.FORCE))
 
     logger.info(report)
-    webbrowser.open(report)
+
+    if not args.no_browser:
+        webbrowser.open(report)
 
 
 def parse_input_file(filepath: Path) -> tuple[str, list[list[Any]]]:
