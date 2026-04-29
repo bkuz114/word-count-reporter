@@ -57,46 +57,19 @@ ASSETS_SRC = TEMPLATES_DIR / "assets"
 ENC = "utf-8"
 
 
-def main(args: Optional[list[str]] = None) -> None:
+def main() -> None:
     """Main entry point for the word-count-reporter CLI.
 
-    Why does 'args' exist and why is it optional?
+    Parses command-line arguments using argparse, which automatically
+    reads from sys.argv. This function is called by:
 
-    - The console script (created by pip install) calls main() with NO arguments.
-      (Why: pyproject.toml defines this function as entrypoint -- bypassing __main__)
-      When called this way, main() defaults args=None and reads from sys.argv.
-
-    - When run directly as a script (python cli.py), the __main__ block calls
-      main(sys.argv[1:]) with arguments explicitly passed.
-
-    The optional parameter supports BOTH invocation methods:
-
-        # After pip install (console script calls with no args)
-        $ word-count-reporter input.txt
-        -> main() called with args=None → reads sys.argv
-
-        # Direct execution (__main__ passes args explicitly)
-        $ python src/word_count_reporter/cli.py input.txt
-        -> main(["input.txt"]) called with explicit args → uses them directly
-
-        # Run as module (via __main__.py)
-        $ python -m word_count_reporter input.txt
-        -> same as console script (no args passed to main())
-
-    This pattern is standard for Python CLI tools that are both:
-    - Installable via pip (console script)
-    - Runnable from source without installation
-
-    Args:
-        args (list): Command-line arguments (typically sys.argv[1:]).
-              If None, uses sys.argv[1:].
+    - The console script after pip install: `word-count-reporter`
+    - Direct execution: `python src/word_count_reporter/cli.py`
+    - Module execution: `python -m word_count_reporter`
 
     Returns:
         None
     """
-    if args is None:
-        args = sys.argv[1:]
-
     parser = argparse.ArgumentParser(
         description="Generate a word count report from text and DOCX documents.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -157,7 +130,7 @@ def main(args: Optional[list[str]] = None) -> None:
         help="Overwrite output file if exists",
     )
     parser.add_argument("--version", action="version", version=f"{__version__}")
-    args = parser.parse_args(args)
+    args = parser.parse_args()
 
     # a logger for my debugging purposes
     loglevel = logging.DEBUG
@@ -654,4 +627,4 @@ def docx_to_txt(srcpath: Path, destpath: Path) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
