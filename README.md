@@ -20,7 +20,7 @@ pip install word-count-reporter
 word-count-reporter INPUTFILE
 ```
 
-The generated report will open automatically in your browser. That's it.
+The generated report will open automatically in your browser (prevent browser open with `--no-browser` flag). That's it.
 
 ## Installation
 
@@ -89,6 +89,7 @@ Whether installed via pip or run from source, the same options apply:
 | `-b`, `--backup` | Backup source files as text files in the report directory. `.docx` files are converted to `.txt`; `.txt` files are copied as-is. |
 | `-t`, `--no-timestamp` | Omit timestamp from auto-generated output filename. |
 | `-u`, `--use-title` | Use project title in auto-generated output filename. |
+| `--no-browser` | Prevents browser from automatically opening with the report upon completion. |
 | `-F`, `--FORCE` | Overwrite output file if it already exists. |
 | `--log-level {debug,info}` | Set logging verbosity (default: `info`). |
 | `-h`, `--help` | Show help message and exit. |
@@ -261,7 +262,7 @@ The script generates a self-contained HTML report containing:
 - Links to source files (original or backed-up versions)
 - Total word count across all chapters
 
-When using the command line, the report automatically opens in your default web browser after generation. The web interface displays a link to the generated report.
+When using the command line, the report automatically opens in your default web browser after generation (unless `--no-browser` flag given). The web interface displays a link to the generated report.
 
 ## Troubleshooting
 
