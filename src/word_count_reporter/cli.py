@@ -105,7 +105,7 @@ def main() -> None:
     )
     parser.add_argument(
         "-t",
-        "--notimestamp",
+        "--no-timestamp",
         required=False,
         action="store_true",
         help="Don't timestamp output file",
@@ -117,14 +117,14 @@ def main() -> None:
     )
     parser.add_argument(
         "-u",
-        "--usetitle",
+        "--use-title",
         required=False,
         action="store_true",
         help="When --output not given, use the project's "
         "title in filename generated for the report.",
     )
     parser.add_argument(
-        "--loglevel", default="info", choices=["debug", "info"], help="Log level."
+        "--log-level", default="info", choices=["debug", "info"], help="Log level."
     )
     parser.add_argument(
         "-F",
@@ -139,8 +139,8 @@ def main() -> None:
 
     # a logger for my debugging purposes
     loglevel = logging.DEBUG
-    if args.loglevel:
-        match args.loglevel:
+    if args.log_level:
+        match args.log_level:
             case "debug":
                 loglevel = logging.DEBUG
             case "info":
@@ -167,11 +167,11 @@ def main() -> None:
     generic_filename = "word-count-report"
     generic_folder = "word_count_w_backup"
     ts = timestamp()
-    if args.usetitle:
+    if args.use_title:
         safe_title = title.replace(" ", "_")
         generic_filename = safe_title + "-" + generic_filename
         generic_folder = safe_title + "-" + generic_folder
-    if not args.notimestamp:
+    if not args.no_timestamp:
         generic_filename += "_" + ts
         generic_folder += "_" + ts
     generic_filename += ".html"
