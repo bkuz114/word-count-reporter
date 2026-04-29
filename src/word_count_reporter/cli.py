@@ -57,6 +57,122 @@ ASSETS_SRC = TEMPLATES_DIR / "assets"
 ENC = "utf-8"
 
 
+def determine_output_paths(
+    output_arg: Path | None,
+    title: str,
+    use_title: bool,
+    no_timestamp: bool,
+    backup: bool,
+    default_report_dir: Path,
+) -> tuple[Path, Path | None]:
+    """
+    Determines path to report file and optional backup dir
+    based on user-provided flags.
+
+    Args:
+        output_arg: Output directory from --output
+        title: Project title (used for constructing dir, filename when use_title True).
+        use_title: (boolean) Whether --use-title flag set. When True, a per-run
+            subdir of project title created. Also prependeds to report filename.
+            *NOTE*: whitespace converted to _ to avoid scripting issues
+        no_timestamp: (boolean) Whether --no-timestamp flag set. When True,
+            pre-run timestamps are NOT appeanded to directory or filenames.
+            WARNING: When combined with backup, per-run backup dir may collide with
+            repeated runs of same project (i.e. reports/myproject1/ will have a
+            "backup_run/" dir each run of the project)
+        backup: (boolean) Whether --backup was given. When True, output is
+            placed in a per-run subdirectory.
+        default_report_dir: Default output directory when output_arg not provided.
+
+    Returns: tuple (report_file, backup_dir) where:
+        - report_file: full path for the HTML report
+        - backup_dir: full path to backup subdirectory (or None if backup == False)
+
+    Examples:
+        # No flags (flat files in default output dir)
+        /reports/report_20260429_143052.html
+
+        # --use-title (dedicated project dir + title on filename)
+        /reports/Project_1/Project_1-report_20260429_143052.html
+
+        # --no-timestamp
+        /reports/report.html
+        *WARNING*: collisions on repeated runs
+
+        # --use-title --no-timestamp
+        /reports/Project_1/Project_1-report.html
+        *WARNING*: collisions on repeated runs of same project
+
+        # --backup
+        /reports/backup_run-20260429_143052/
+            report_20260429_143052.html
+            backups/* <-- input files backed up here
+
+        # --backup --use-title
+        /reports/Project_1/backup_run-Project_1-20260429_143052/
+            Project_1-report_20260429_143052.html
+            backups/ <-- input files backed up here
+
+        # --backup --no-timestamp
+        /reports/backup_run/
+            report.html
+            backups/ <-- input files backed up here
+        *WARNING*: collisions on repeated runs
+
+        # --backup --use-title --no-timestamp
+        /reports/Project_1/backup_run-Project_1/
+            Project_1-report.html
+            backups/ <-- input files backed up here
+        *WARNING*: collisions on repeated runs of same project
+
+        # --output /custom --backup --use-title
+        /custom/Project_1/backup_run-20260429_143052/
+            Project_1-report_20260429_143052.html
+            backups/
+    """
+    ts = timestamp() if not no_timestamp else None
+    # resolve custom output relative cwd
+    if output_arg:
+        output_arg = output_arg.resolve()
+    # ensure title supplied if want to --use-title
+    if use_title and not title:
+        raise ValueError("No title when specifying --use-title")
+    # convert whitespace to _ in title
+    title = title.replace(" ", "_")
+
+    # I: Base output directory. 3 options:
+    output_dir = output_arg or default_report_dir
+    if use_title:
+        output_dir = output_dir / title
+
+    # II: Output dir when backups=True:
+    # When backing up, isolate this run in its own subdirectory so report
+    # and backed up files will be contained together, (rather than spread
+    # out in a single dir), and to prevent collisions with previous runs . e.g.
+    #
+    # reports/project1/
+    # - report_4_29_1.html
+    # - report_4_29_2.html <-- which report belongs to backup/ folder?
+    # - backups/ <-- will be overwritten on subsequent run; instead want dedicated dir
+    if backup:
+        dir_name = f"backup_run-{ts}" if ts else "backup_run"
+        # report + dedicated backup dir will live here
+        output_dir = output_dir / dir_name
+
+    # III: Report filename: optionally prefixed with title and suffixed with timestamp
+    report_name = "report"
+    if use_title:
+        report_name = f"{title}-{report_name}"
+    if ts:
+        report_name += f"_{ts}"
+
+    # IV: Final path to report and backup dir
+    report_file = output_dir / f"{report_name}.html"
+    backup_dir = output_dir / "backups" if backup else None
+
+    return report_file, backup_dir
+
+
 def main() -> None:
     """Main entry point for the word-count-reporter CLI.
 
@@ -161,69 +277,12 @@ def main() -> None:
     # each inner array is [chap name, path to file]
     title, input_data = parse_input_file(ifile)
 
-    # generic output file and possibly folder
-    # (if --backup, will encorporate a folder)
-
-    generic_filename = "word-count-report"
-    generic_folder = "word_count_w_backup"
-    ts = timestamp()
-    if args.use_title:
-        safe_title = title.replace(" ", "_")
-        generic_filename = safe_title + "-" + generic_filename
-        generic_folder = safe_title + "-" + generic_folder
-    if not args.no_timestamp:
-        generic_filename += "_" + ts
-        generic_folder += "_" + ts
-    generic_filename += ".html"
-
-    # determine report file path, and backup dir if needed
-
-    report_dir = None  # Path object to hold the report (and backups)
-    report_filename = None  # name of the report
-
-    if args.output:  # --output arg given
-        # resolve rel. users cwd
-        output_path = args.output.resolve()
-        ext = output_path.suffix
-        if args.backup:  # --backup given: --output should be a folder
-            logger.debug("op #1: (--output, --backup)")
-            if ext:
-                raise Exception(
-                    "\n--output and --backup given, but "
-                    " --output appears to be a file (it has "
-                    "an extension). If you're giving --backup "
-                    "and --output, then --output should specify "
-                    "a FOLDER, which will hold both the report "
-                    "file as well as the backed up files :)"
-                )
-            report_dir = output_path
-            report_filename = generic_filename
-        else:  # --backup not given; --output should be a file (the report)
-            logger.debug("op #2: (--output, no --backup)")
-            if not ext:
-                raise Exception("\n\n--output does not appear to be a file")
-            report_dir = output_path.parent
-            report_filename = output_path.name
-    else:  # --output arg not given - use default
-        report_dir = REPORT_DIR / title  # title was returned from parse_input_file
-        report_filename = generic_filename
-        if (
-            args.backup
-        ):  # if --backup, default report dir should be an extra FOLDER: it will hold backup + report
-            logger.debug("op #3: (no --output, --backup)")
-            report_dir = report_dir / generic_folder
-
-    # final path to the report
-    report_file = report_dir / report_filename
-    if not report_file.is_absolute():
-        report_file = SCRIPT_DIR / report_file
-
-    logger.debug(f"report dir     : {str(report_dir)}")
-    logger.debug(f"report filename: {report_filename}")
+    # get filepath to output file + backup dir
+    report_file, backup_dir = determine_output_paths(
+        args.output, title, args.use_title, args.no_timestamp, args.backup, REPORT_DIR
+    )
     logger.debug(f"Report file    : {str(report_file)}")
-
-    # if the report dir doesnt exist, create it
-    report_dir.mkdir(parents=True, exist_ok=True)
+    logger.debug(f"Backup dir     : {str(backup_dir)}")
 
     # 2:40 pm 10/10/24
     # 2:48
@@ -232,7 +291,9 @@ def main() -> None:
     logger.debug(input_data)
 
     if args.backup:
-        backup_files = backup(input_data, report_dir)
+        if not backup_dir:
+            raise Exception("Bug: --backup specified, but backup_dir not determined")
+        backup_files = backup(input_data, backup_dir)
         new_idata = []
         logger.debug("loop through and back up files")
         # zip allows you to loop through 2 lists at once
@@ -548,19 +609,17 @@ def file_word_count(filepath: Path) -> int:
         )
 
 
-def backup(files_info: list[list[Any]], report_dir: Path) -> list[Path]:
+def backup(files_info: list[list[Any]], backup_dir: Path) -> list[Path]:
     """Back up all source files to a subdirectory.
 
     Args:
         files_info (list): List of [chapter_name (str), file_path (Path)] pairs.
-        report_dir (Path): Directory where the report will be saved; backups
-                          are placed in a "files" subdirectory.
+        backup_dir (Path): Directory to back files up to.
 
     Returns:
         list[Path]: Paths to the backed-up files, in the same order as files_info.
     """
     destfiles = []
-    backup_dir = report_dir / "files"
     for file_info in files_info:
         # 'backup' the file and add filepath of
         # backed up file to destfiles
