@@ -36,7 +36,10 @@ import shutil
 import logging
 from pathlib import Path
 
-# Add the src directory to Python's path when running from source
+# Allow direct execution from source during development (e.g., `python cli.py`)
+# by adding the `src/` directory to Python's import path. This block only runs
+# when the script is executed directly, not when imported as a module or run
+# from a pip installation.
 if __name__ == "__main__":
     src_dir = Path(__file__).resolve().parent.parent  # resolve() to handle symlinks
     if str(src_dir) not in sys.path:
