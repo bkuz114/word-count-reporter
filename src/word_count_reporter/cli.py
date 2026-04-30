@@ -57,6 +57,103 @@ ASSETS_SRC = TEMPLATES_DIR / "assets"
 ENC = "utf-8"
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Generate a word count report from text and DOCX documents.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "input",
+        metavar="INPUTFILE",
+        type=Path,
+        help="Input file describing project title and chapter file paths",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="""Output file. If not supplied,
+                        will be based on title and timestamp""",
+        required=False,
+    )
+    parser.add_argument(
+        "-b",
+        "--backup",
+        required=False,
+        action="store_true",
+        help="Backup input files as text files in the same "
+        "directory holding the report. Notes: "
+        "(1) if any of the files are .docx files, will "
+        "convert them to text files; .txt files will be "
+        "backed up as is; other file type not supported."
+        " (2) if --backup and --output both given, "
+        "then --output should be the directory for both "
+        "the report and the backed up "
+        "files, NOT the path to the report itself.",
+    )
+    parser.add_argument(
+        "-t",
+        "--no-timestamp",
+        required=False,
+        action="store_true",
+        help="Don't timestamp output file",
+    )
+    parser.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="Don't open browser once report is generated.",
+    )
+    parser.add_argument(
+        "-u",
+        "--use-title",
+        required=False,
+        action="store_true",
+        help="When --output not given, use the project's "
+        "title in filename generated for the report.",
+    )
+    parser.add_argument(
+        "--log-level", default="info", choices=["debug", "info"], help="Log level."
+    )
+    parser.add_argument(
+        "-F",
+        "--FORCE",
+        required=False,
+        action="store_true",
+        default=False,
+        help="Overwrite output file if exists",
+    )
+    parser.add_argument("--version", action="version", version=f"{__version__}")
+    return parser.parse_args()
+
+
+# -----------------------------------------------------------------------------
+# MAIN SETUP
+# -----------------------------------------------------------------------------
+
+
+def enable_logging(log_level_arg: str) -> None:
+    """Configure the root logger with the given log level.
+
+    Sets the logger's severity threshold and attaches a console handler
+    for output. Only intended to be called once at startup.
+
+    Args:
+        log_level_arg: Case-insensitive log level string. Accepted values are
+            "debug" and "info". Any unrecognized value defaults to DEBUG.
+    """
+    loglevel = logging.DEBUG
+    if log_level_arg:
+        match log_level_arg:
+            case "debug":
+                loglevel = logging.DEBUG
+            case "info":
+                loglevel = logging.INFO
+    logger.setLevel(loglevel)
+    console = logging.StreamHandler()
+    # console.setFormatter(logging.Formatter('%(name)-12s: %(message)s'))
+    logger.addHandler(console)
+
+
 def determine_output_paths(
     output_arg: Path | None,
     title: str,
@@ -173,6 +270,49 @@ def determine_output_paths(
     return report_file, backup_dir
 
 
+def setup_backup(input_data: list[list[str]], backup_dir: Path) -> list[list[str]]:
+    """Back up input files and return input data referencing the copies.
+
+    Copies each source file into backup_dir, then replaces the
+    original file paths in input_data with the paths to the
+    backed-up copies. This ensures the report is generated from the
+    isolated backup files rather than the original sources.
+
+    Args:
+        input_data: List of chapters, where each entry is
+            [chapter_name, source_filepath]
+        backup_dir: Directory to place the backed-up files.
+
+    Returns:
+        A new list with the same chapter names and the paths to the
+        backed-up file copies.
+
+    Raises:
+        RuntimeError: If backup_dir`` is None or not absolute.
+    """
+    if not backup_dir:
+        raise RuntimeError("Bug: --backup specified, but backup_dir not determined")
+    if not backup_dir.is_absolute():
+        raise RuntimeError(f"Backup dir not absolute: {backup_dir}")
+
+    # Copy all source files into the backup directory
+    backup_files = backup(input_data, backup_dir)
+    new_idata = []
+
+    # Replace source paths with backup paths, preserving chapter names
+    list_print = "\n".join(map(str, input_data))  # to pretty print list data
+    logger.debug(f"original input data:")
+    logger.debug(list_print)
+    for original, backed_up in zip(input_data, backup_files):
+        new_idata.append([original[0], backed_up])
+    input_data = new_idata
+    list_print = "\n".join(map(str, input_data))
+    logger.debug(f"new input data:")
+    logger.debug(list_print)
+
+    return input_data
+
+
 def main() -> None:
     """Main entry point for the word-count-reporter CLI.
 
@@ -186,128 +326,37 @@ def main() -> None:
     Returns:
         None
     """
-    parser = argparse.ArgumentParser(
-        description="Generate a word count report from text and DOCX documents.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument(
-        "input",
-        metavar="INPUTFILE",
-        type=Path,
-        help="Input file describing project title and chapter file paths",
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        help="""Output file. If not supplied,
-                        will be based on title and timestamp""",
-        required=False,
-    )
-    parser.add_argument(
-        "-b",
-        "--backup",
-        required=False,
-        action="store_true",
-        help="Backup input files as text files in the same "
-        "directory holding the report. Notes: "
-        "(1) if any of the files are .docx files, will "
-        "convert them to text files; .txt files will be "
-        "backed up as is; other file type not supported."
-        " (2) if --backup and --output both given, "
-        "then --output should be the directory for both "
-        "the report and the backed up "
-        "files, NOT the path to the report itself.",
-    )
-    parser.add_argument(
-        "-t",
-        "--no-timestamp",
-        required=False,
-        action="store_true",
-        help="Don't timestamp output file",
-    )
-    parser.add_argument(
-        "--no-browser",
-        action="store_true",
-        help="Don't open browser once report is generated.",
-    )
-    parser.add_argument(
-        "-u",
-        "--use-title",
-        required=False,
-        action="store_true",
-        help="When --output not given, use the project's "
-        "title in filename generated for the report.",
-    )
-    parser.add_argument(
-        "--log-level", default="info", choices=["debug", "info"], help="Log level."
-    )
-    parser.add_argument(
-        "-F",
-        "--FORCE",
-        required=False,
-        action="store_true",
-        default=False,
-        help="Overwrite output file if exists",
-    )
-    parser.add_argument("--version", action="version", version=f"{__version__}")
-    args = parser.parse_args()
+    # handle CLI
+    args = parse_args()
 
-    # a logger for my debugging purposes
-    loglevel = logging.DEBUG
-    if args.log_level:
-        match args.log_level:
-            case "debug":
-                loglevel = logging.DEBUG
-            case "info":
-                loglevel = logging.INFO
-    logger.setLevel(loglevel)
-    console = logging.StreamHandler()
-    # console.setFormatter(logging.Formatter('%(name)-12s: %(message)s'))
-    logger.addHandler(console)
+    # set up logger
+    enable_logging(args.log_level)
 
-    # Get input file.
-    ifile = args.input.resolve()  # resolves rel user's cwd
-    if not ifile.exists():
-        raise Exception(f"Input file {str(ifile)} does not exist!")
+    # parse input file
+    input_file = args.input.resolve()  # resolve rel cwd
+    # input_data is list of lists.
+    # inner lists correspond to chapters: [name, path to file]
+    title, input_data = parse_input_file(input_file)
 
-    # parse the input file
-    # note: input_data is array of arrays.
-    # each inner array corresponds to a chapter.
-    # each inner array is [chap name, path to file]
-    title, input_data = parse_input_file(ifile)
-
-    # get filepath to output file + backup dir
+    # determine paths for HTML report + backup dir
+    output_dir = args.output.resolve() if args.output else None  # resolve rel cwd
     report_file, backup_dir = determine_output_paths(
-        args.output, title, args.use_title, args.no_timestamp, args.backup, REPORT_DIR
+        output_dir, title, args.use_title, args.no_timestamp, args.backup, REPORT_DIR
     )
-    logger.debug(f"Report file    : {str(report_file)}")
-    logger.debug(f"Backup dir     : {str(backup_dir)}")
 
-    # 2:40 pm 10/10/24
-    # 2:48
-
-    logger.debug("original input data:")
-    logger.debug(input_data)
-
+    # backup input files
     if args.backup:
-        if not backup_dir:
-            raise Exception("Bug: --backup specified, but backup_dir not determined")
-        backup_files = backup(input_data, backup_dir)
-        new_idata = []
-        logger.debug("loop through and back up files")
-        # zip allows you to loop through 2 lists at once
-        for original, backed_up in zip(input_data, backup_files):
-            new_idata.append([original[0], backed_up])
-        input_data = new_idata
+        # setup_backup returns version of input_data pointing to backed up
+        # files, so can read from up files during report generation
+        input_data = setup_backup(input_data, backup_dir)
 
-    logger.debug("new input data:")
-    logger.debug(input_data)
-
+    # create the HTML report
     report = str(make_report(title, input_data, report_file, args.FORCE))
 
+    # print filepath to created report
     logger.info(report)
 
+    # optionally open in browser
     if not args.no_browser:
         webbrowser.open(report)
 
@@ -323,6 +372,9 @@ def parse_input_file(filepath: Path) -> tuple[str, list[list[Any]]]:
             - title (str): Project title from input file.
             - my_data (list): List of [chapter_name (str), file_path (Path)] pairs.
     """
+    if not filepath.exists():
+        raise Exception(f"Input file {str(filepath)} does not exist!")
+
     title, file_data, inputfile_had_parts = inputfile.parse_data_file(str(filepath))
     my_data = []
     for data in file_data:
