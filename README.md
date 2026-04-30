@@ -97,23 +97,28 @@ Whether installed via pip or run from source, the same options apply:
 
 ## Input File Format
 
-The input file defines the project title and lists the documents to be processed. It consists of two sections: `[keys]` and `[book]`.
+The input file is a JSON file that defines the project title and lists the documents to be processed.
 
-### Example Input File
+### Example Input file
 
+```json
+{
+  "title": "My Book",
+  "root": "./documents",
+  "chapters": [
+    {
+      "number": 1,
+      "name": "Introduction",
+      "files": ["intro.txt"]
+    },
+    {
+      "files": ["chapter2.txt"]
+    }
+  ]
+}
 ```
-[keys]
-title: Example Project
-root: ./documents
 
-[book]
-:Chapter One:introduction.docx
-2:Background:background.docx
-::section1.txt
-::section2.txt
-```
-
-### Section: `[keys]`
+### Metadata
 
 Optional key-value pairs that configure the report. Supported keys:
 
@@ -122,29 +127,60 @@ Optional key-value pairs that configure the report. Supported keys:
 | `title` | Project title displayed in the report header. |
 | `root` | Base directory for relative file paths in the `[book]` section. **For web interface, this must be an absolute path.** |
 
-### Section: `[book]`
+### Chapters
 
-Lists the documents to process. Each line follows the format:
+The `chapters` array defines the structure of your document. Each chapter object supports the following fields:
 
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `number` | integer | No | Chapter number (auto-incremented if omitted) |
+| `name` | string | No | Chapter title (defaults to `"Chapter X"` if omitted) |
+| `files` | array | Yes | One or more source files for this chapter |
+
+#### Multiple files per chapter
+
+A chapter can span multiple files. Specify them as an array:
+
+```json
+{
+  "name": "Introduction",
+  "files": ["intro_part1.txt", "intro_part2.txt", "intro_part3.txt"]
+}
 ```
-[chapter_number]:[chapter_name]:[filepath]
+
+In the generated report, all files will be listed under the same chapter row, each with a clickable link.
+
+#### Custom file display names
+
+For each file, you can optionally specify a custom display name that will appear in the report (appended to the chapter name). Use the object syntax:
+
+```json
+{
+  "name": "Introduction",
+  "files": [
+    "intro_overview.txt",
+    {"path": "legal_disclaimer.pdf", "name": "Disclaimer"},
+    {"path": "appendix.pdf", "name": "Supplemental Reading"}
+  ]
+}
 ```
 
-#### Field Rules
+In the report, these will appear as:
+- `Introduction`
+- `Introduction: Disclaimer`
+- `Introduction: Supplemental Reading`
 
-| Field | Description |
-|-------|-------------|
-| `chapter_number` | Optional. If omitted, numbering continues from previous chapter (starting at 1). |
-| `chapter_name` | Optional. If omitted, defaults to the base filename of `filepath`. |
-| `filepath` | Required. Path to a `.txt` or `.docx` file. For CLI tool: relative paths are resolved against the `root` key (if provided) or the input file's directory. For the web interface, use absolute paths or set `root` to an absolute path. |
+The simple string form (`"intro_overview.txt"`) uses the filename as the display name.
 
-#### Examples
+#### Auto-numbering and default names
 
-| Line | Resulting Chapter # | Resulting Chapter Name | Source File |
-|------|--------------------|------------------------|-------------|
-| `::chapter1.txt` | 1 (auto) | `chapter1.txt` | `chapter1.txt` |
-| `:Introduction:intro.docx` | 2 (auto) | `Introduction` | `intro.docx` |
-| `5:Chapter Five:ch5.docx` | 5 | `Chapter Five` | `ch5.docx` |
+If you omit `number`, chapters are numbered sequentially starting from 1. If you omit `name`, the chapter is titled `"Chapter X"` (where X is the chapter number). A chapter with both omitted:
+
+```json
+{"files": ["chapter2.txt"]}
+```
+
+...will appear as `"Chapter 2"` in the report.
 
 ### Web Interface (PHP)
 

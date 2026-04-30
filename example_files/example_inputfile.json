@@ -1,0 +1,51 @@
+{
+  "title": "Example File",
+  "root": "./lorem_ipsum",
+  "chapters": [
+    {
+      "files": ["test.docx"]
+    },
+    {
+      "files": ["Chapter1.txt"]
+    },
+    {
+      "files": ["Chapter2.txt"]
+    },
+    {
+      "files": ["Chapter3.txt"]
+    },
+    {
+      "files": ["Chapter4.txt"]
+    },
+    {
+      "files": ["Chapter5.txt"]
+    },
+    {
+      "files": ["Chapter6.txt"]
+    },
+    {
+      "files": ["Chapter7.txt"]
+    },
+    {
+      "files": ["Chapter8.txt"]
+    },
+    {
+      "files": ["Chapter9.txt"]
+    },
+    {
+      "files": ["Chapter10.txt"]
+    },
+    {
+      "files": ["Chapter11.txt"]
+    },
+    {
+      "files": ["Chapter12.txt"]
+    },
+    {
+      "files": ["Chapter13.txt"]
+    },
+    {
+      "files": ["Chapter14.txt"]
+    }
+  ]
+}

@@ -26,7 +26,7 @@ Output:
 """
 
 from datetime import datetime as dt
-from docx import Document
+from docx import Document as Docx
 from bs4 import BeautifulSoup
 from typing import Any, Optional, Union
 import webbrowser
@@ -46,7 +46,8 @@ if __name__ == "__main__":
         sys.path.insert(0, str(src_dir))
 
 # Now absolute imports work even when running directly
-from word_count_reporter.utils import inputfile
+from word_count_reporter.vendor import inputfile
+from word_count_reporter.vendor.inputfile import Document, Chapter, FileRef
 from word_count_reporter import __version__
 
 logger = logging.getLogger(__name__)
@@ -273,31 +274,6 @@ def determine_output_paths(
     return report_file, backup_dir
 
 
-def parse_input_file(filepath: Path) -> tuple[str, list[list[Any]]]:
-    """Parse the input file and extract title and chapter file paths.
-
-    Args:
-        filepath (Path): Path to the input file.
-
-    Returns:
-        tuple: (title, my_data) where:
-            - title (str): Project title from input file.
-            - my_data (list): List of [chapter_name (str), file_path (Path)] pairs.
-    """
-    if not filepath.exists():
-        raise Exception(f"Input file {str(filepath)} does not exist!")
-
-    title, file_data, inputfile_had_parts = inputfile.parse_data_file(str(filepath))
-    my_data = []
-    for data in file_data:
-        filename = data[1]  # chapter name
-        filepath = Path(data[2])  # filepath to chapter
-        if not filename:  # if no chapter name, make it the name of the file
-            filename = filepath.name
-        my_data.append([filename, filepath])
-    return title, my_data
-
-
 # -----------------------------------------------------------------------------
 # HELPER FUNCTIONS
 # -----------------------------------------------------------------------------
@@ -414,7 +390,7 @@ def word_count_docx(filepath: Path) -> int:
     Returns:
         int: Number of words (split on whitespace per paragraph).
     """
-    document = Document(str(filepath))
+    document = Docx(str(filepath))
     num_words = 0
     for paragraph in document.paragraphs:
         words = paragraph.text.split()
@@ -491,7 +467,7 @@ def docx_to_txt(srcpath: Path, destpath: Path) -> None:
     # need to create parent dir of file writing to or python will error
     destpath.parent.mkdir(parents=True, exist_ok=True)
     with open(destpath, "w", encoding=ENC) as destfile:
-        document = Document(str(srcpath))
+        document = Docx(str(srcpath))
         for paragraph in document.paragraphs:
             destfile.write(paragraph.text + "\n")
 
@@ -598,23 +574,33 @@ def generate_report(
 
 
 def make_report(
-    title: str, file_info_list: list[list[Any]], outfile: Path, force: bool
+    title: str, document: list[list[Any]], outfile: Path, force: bool
 ) -> Path:
     """Augment file info with word counts and generate the report.
 
     Args:
         title (str): Project title.
-        file_info_list (list): List of [chapter_name (str), file_path (Path)] pairs.
+        document (list): Document object for the inputfile
         outfile (Path): Output HTML file path.
         force (bool): Overwrite output file if exists.
 
     Returns:
         Path: Path to the generated report file (returned by generate_report).
     """
-    for file_info in file_info_list:
-        filepath = Path(file_info[1])
-        file_info.append(file_word_count(filepath))
-    return generate_report(title, file_info_list, outfile, force)
+    files_info = []
+    for chapter in document.chapters:
+        # get all files for that chapter
+        for file_ref in chapter.files:
+            filepath = file_ref.path
+            filename = chapter.name
+            # if this file has its own name, append it, else use its filename
+            if file_ref.name:
+                filename = f"{filename}: {file_ref.name}"
+            else:
+                filename = f"{filename}: {filepath.name}"
+            word_count = file_word_count(filepath)
+            files_info.append([filename, filepath, word_count])
+    return generate_report(title, files_info, outfile, force)
 
 
 # -----------------------------------------------------------------------------
@@ -622,13 +608,11 @@ def make_report(
 # -----------------------------------------------------------------------------
 
 
-def backup_file(chapter_filepath: Path, chapter_name: str, backup_dir: Path) -> Path:
+def backup_file(filepath: Path, backup_dir: Path) -> Path:
     """Back up a single file, converting .docx to .txt if needed.
 
     Args:
-        chapter_filepath (Path): Path to the source file.
-        chapter_name (str): Name of the chapter (used for naming .txt output
-                            when converting from .docx).
+        filepath (Path): Path to the source file.
         backup_dir (Path): Destination directory for the backup.
 
     Returns:
@@ -637,46 +621,24 @@ def backup_file(chapter_filepath: Path, chapter_name: str, backup_dir: Path) -> 
     Raises:
         Exception: If file extension is not .txt or .docx.
     """
-    logger.debug(
-        f"Back up:\n\t* chapter: {chapter_name}\n\t* src    : {str(chapter_filepath)}\n\t* dest   : {str(backup_dir)}"
-    )
+    logger.debug(f"Back up:\n\t* file  : {filepath}\n\t* dest   : {str(backup_dir)}")
     extension = chapter_filepath.suffix
     dest_filepath = None  # will be a Path object
     if extension == ".docx":
-        filename_no_ext = Path(
-            chapter_name
-        ).stem  # explore: isnt' chapter_name just a simple string (not a path)?
+        filename_no_ext = chapter_filepath.stem
         dest_filepath = backup_dir / Path(filename_no_ext + ".txt")
-        docx_to_txt(chapter_filepath, dest_filepath)
+        docx_to_txt(filepath, dest_filepath)
     elif extension == ".txt":
-        filename = chapter_filepath.name
+        filename = filepath.name
         dest_filepath = backup_dir / filename
-        shutil.copyfile(str(chapter_filepath), str(dest_filepath))
+        shutil.copyfile(str(filepath), str(dest_filepath))
     else:
         raise Exception("file to backup isn't .docx or .txt")
     logger.debug(f"\tFile backed up to: {str(dest_filepath)}")
     return dest_filepath
 
 
-def backup(files_info: list[list[Any]], backup_dir: Path) -> list[Path]:
-    """Back up all source files to a subdirectory.
-
-    Args:
-        files_info (list): List of [chapter_name (str), file_path (Path)] pairs.
-        backup_dir (Path): Directory to back files up to.
-
-    Returns:
-        list[Path]: Paths to the backed-up files, in the same order as files_info.
-    """
-    destfiles = []
-    for file_info in files_info:
-        # 'backup' the file and add filepath of
-        # backed up file to destfiles
-        destfiles.append(backup_file(Path(file_info[1]), file_info[0], backup_dir))
-    return destfiles
-
-
-def setup_backup(input_data: list[list[str]], backup_dir: Path) -> list[list[str]]:
+def backup_files(doc: Document, backup_dir: Path) -> Document:
     """Back up input files and return input data referencing the copies.
 
     Copies each source file into backup_dir, then replaces the
@@ -690,8 +652,7 @@ def setup_backup(input_data: list[list[str]], backup_dir: Path) -> list[list[str
         backup_dir: Directory to place the backed-up files.
 
     Returns:
-        A new list with the same chapter names and the paths to the
-        backed-up file copies.
+        Modified Document with the filepaths replaced
 
     Raises:
         RuntimeError: If backup_dir is None or not absolute.
@@ -701,22 +662,13 @@ def setup_backup(input_data: list[list[str]], backup_dir: Path) -> list[list[str
     if not backup_dir.is_absolute():
         raise RuntimeError(f"Backup dir not absolute: {backup_dir}")
 
-    # Copy all source files into the backup directory
-    backup_files = backup(input_data, backup_dir)
-    new_idata = []
+    # Back up each file and replace the filepath
+    for chapter in doc.chapters:
+        for file_ref in chapters.files:
+            new_path = backup_file(file_ref.path, chapter.name, backup_dir)
+        file_ref.path = new_path
 
-    # Replace source paths with backup paths, preserving chapter names
-    list_print = "\n".join(map(str, input_data))  # to pretty print list data
-    logger.debug(f"original input data:")
-    logger.debug(list_print)
-    for original, backed_up in zip(input_data, backup_files):
-        new_idata.append([original[0], backed_up])
-    input_data = new_idata
-    list_print = "\n".join(map(str, input_data))
-    logger.debug(f"new input data:")
-    logger.debug(list_print)
-
-    return input_data
+    return doc
 
 
 # -----------------------------------------------------------------------------
@@ -743,11 +695,10 @@ def main() -> None:
     # set up logger
     enable_logging(args.log_level)
 
-    # parse input file
+    # parse input JSON into Document object
     input_file = args.input.resolve()  # resolve rel cwd
-    # input_data is list of lists.
-    # inner lists correspond to chapters: [name, path to file]
-    title, input_data = parse_input_file(input_file)
+    doc = Document.from_json(input_file)
+    title = doc.title
 
     # determine paths for HTML report + backup dir
     output_dir = args.output.resolve() if args.output else None  # resolve rel cwd
@@ -757,12 +708,12 @@ def main() -> None:
 
     # backup input files
     if args.backup:
-        # setup_backup returns version of input_data pointing to backed up
+        # setup_backup replaces filepaths in Document to backed up
         # files, so can read from up files during report generation
-        input_data = setup_backup(input_data, backup_dir)
+        doc = backup_files(input_data, backup_dir)
 
     # create the HTML report
-    report = str(make_report(title, input_data, report_file, args.FORCE))
+    report = str(make_report(title, doc, report_file, args.FORCE))
 
     # print filepath to created report
     logger.info(report)

@@ -1,0 +1,15 @@
+# Vendored Dependencies for word-count-reporter
+# Last updated: 2026-04-30
+# See CONTRIBUTING.md for vendoring policy
+
+## inputfile.py: https://github.com/bkuz114/inputfile-parser
+- Version: 1.0.0+ (commit 1e21de5)
+  https://github.com/bkuz114/inputfile-parser/commit/7329df10ab1486fec8f20c53856ba9937887d218
+- Original license: MIT
+- Files vendored:
+  - inputfile.py
+- Modifications: None (vendored as-is)
+- Reason: Provides parsing ability for input JSON files
+
+## Vendor Maintenance Notes
+- Do not edit vendored files directly; modify source and re-vendor
