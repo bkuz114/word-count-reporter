@@ -270,97 +270,6 @@ def determine_output_paths(
     return report_file, backup_dir
 
 
-def setup_backup(input_data: list[list[str]], backup_dir: Path) -> list[list[str]]:
-    """Back up input files and return input data referencing the copies.
-
-    Copies each source file into backup_dir, then replaces the
-    original file paths in input_data with the paths to the
-    backed-up copies. This ensures the report is generated from the
-    isolated backup files rather than the original sources.
-
-    Args:
-        input_data: List of chapters, where each entry is
-            [chapter_name, source_filepath]
-        backup_dir: Directory to place the backed-up files.
-
-    Returns:
-        A new list with the same chapter names and the paths to the
-        backed-up file copies.
-
-    Raises:
-        RuntimeError: If backup_dir is None or not absolute.
-    """
-    if not backup_dir:
-        raise RuntimeError("Bug: --backup specified, but backup_dir not determined")
-    if not backup_dir.is_absolute():
-        raise RuntimeError(f"Backup dir not absolute: {backup_dir}")
-
-    # Copy all source files into the backup directory
-    backup_files = backup(input_data, backup_dir)
-    new_idata = []
-
-    # Replace source paths with backup paths, preserving chapter names
-    list_print = "\n".join(map(str, input_data))  # to pretty print list data
-    logger.debug(f"original input data:")
-    logger.debug(list_print)
-    for original, backed_up in zip(input_data, backup_files):
-        new_idata.append([original[0], backed_up])
-    input_data = new_idata
-    list_print = "\n".join(map(str, input_data))
-    logger.debug(f"new input data:")
-    logger.debug(list_print)
-
-    return input_data
-
-
-def main() -> None:
-    """Main entry point for the word-count-reporter CLI.
-
-    Parses command-line arguments using argparse, which automatically
-    reads from sys.argv. This function is called by:
-
-    - The console script after pip install: word-count-reporter
-    - Direct execution: python src/word_count_reporter/cli.py
-    - Module execution: python -m word_count_reporter
-
-    Returns:
-        None
-    """
-    # handle CLI
-    args = parse_args()
-
-    # set up logger
-    enable_logging(args.log_level)
-
-    # parse input file
-    input_file = args.input.resolve()  # resolve rel cwd
-    # input_data is list of lists.
-    # inner lists correspond to chapters: [name, path to file]
-    title, input_data = parse_input_file(input_file)
-
-    # determine paths for HTML report + backup dir
-    output_dir = args.output.resolve() if args.output else None  # resolve rel cwd
-    report_file, backup_dir = determine_output_paths(
-        output_dir, title, args.use_title, args.no_timestamp, args.backup, REPORT_DIR
-    )
-
-    # backup input files
-    if args.backup:
-        # setup_backup returns version of input_data pointing to backed up
-        # files, so can read from up files during report generation
-        input_data = setup_backup(input_data, backup_dir)
-
-    # create the HTML report
-    report = str(make_report(title, input_data, report_file, args.FORCE))
-
-    # print filepath to created report
-    logger.info(report)
-
-    # optionally open in browser
-    if not args.no_browser:
-        webbrowser.open(report)
-
-
 def parse_input_file(filepath: Path) -> tuple[str, list[list[Any]]]:
     """Parse the input file and extract title and chapter file paths.
 
@@ -386,24 +295,9 @@ def parse_input_file(filepath: Path) -> tuple[str, list[list[Any]]]:
     return title, my_data
 
 
-def make_report(
-    title: str, file_info_list: list[list[Any]], outfile: Path, force: bool
-) -> Path:
-    """Augment file info with word counts and generate the report.
-
-    Args:
-        title (str): Project title.
-        file_info_list (list): List of [chapter_name (str), file_path (Path)] pairs.
-        outfile (Path): Output HTML file path.
-        force (bool): Overwrite output file if exists.
-
-    Returns:
-        Path: Path to the generated report file (returned by generate_report).
-    """
-    for file_info in file_info_list:
-        filepath = Path(file_info[1])
-        file_info.append(file_word_count(filepath))
-    return generate_report(title, file_info_list, outfile, force)
+# -----------------------------------------------------------------------------
+# HELPER FUNCTIONS
+# -----------------------------------------------------------------------------
 
 
 def timestamp() -> str:
@@ -427,6 +321,37 @@ def date_string() -> str:
     formatted_time = time.strftime("%I:%M:%S %p")
 
     return f"{formatted_date}, {formatted_time}"
+
+
+def file_url(filepath: Path) -> str:
+    """Convert a local file path to a file:// URL for HTML links.
+
+    Args:
+        filepath (Path): Local file path (backslashes allowed).
+
+    Returns:
+        str: URL in format file:///C:/path/to/file.
+    """
+    filestr = str(filepath).replace("\\", "/")
+    filestr = "file:///" + filestr
+    return filestr
+
+
+def number(numstr: Union[int, str]) -> str:
+    """Format a number with thousand separators.
+
+    Args:
+        numstr (int or str): Number to format.
+
+    Returns:
+        str: Number with commas as thousand separators.
+    """
+    return f"{numstr:,}"
+
+
+# -----------------------------------------------------------------------------
+# FILE I/O
+# -----------------------------------------------------------------------------
 
 
 def file_contents(filepath: Path) -> str:
@@ -475,128 +400,6 @@ def write_file(filepath: Path, data: str, force: bool) -> None:
     mode = "w" if force else "x"
     with open(filepath, mode, encoding=ENC) as wr:
         wr.write(data)
-
-
-def generate_report(
-    title: str, word_count_info: list[Any], outfile: Path, force: bool
-) -> Path:
-    """Generate an HTML report from word count data.
-
-    Args:
-        title (str): Project title.
-        word_count_info (list): List of [chapter_name (str), file_path (Path), word_count (int)].
-        outfile (Path): Output HTML file path.
-        force (bool): Overwrite output file if exists.
-
-    Returns:
-        Path: Path to the generated report file.
-    """
-    date = date_string()
-
-    contents = file_contents(TEMPLATES_DIR / "report_template.html")
-    # css and js to embed
-    css_contents = file_contents(ASSETS_SRC / "style.css")
-    js_contents = file_contents(ASSETS_SRC / "scripts.js")
-
-    contents = contents.replace("%title%", title)
-    contents = contents.replace("%date%", date)
-    # embed css and js for portability
-    contents = contents.replace("%css%", css_contents)
-    contents = contents.replace("%script%", js_contents)
-
-    soup = BeautifulSoup(contents.encode(ENC), "html.parser")
-
-    # Get <tbody> in word-count-table
-    table = soup.find(attrs={"id": "word-count-table"})
-    if not table:
-        raise RuntimeError("Could not find table with id='word-count-table'")
-    tbody = table.find("tbody")
-    if not tbody:
-        raise RuntimeError("Table missing required <tbody> element")
-
-    # append rows directly to <tbody>
-    total_words = 0
-    for idx, count_info in enumerate(word_count_info):
-        tbody.append(word_count_row(count_info, idx + 1))
-        total_words += count_info[2]
-    tbody.append(total_row(total_words))
-
-    pretty_soup = soup.prettify(formatter="html")
-    write_file(outfile, pretty_soup, force)
-    return outfile
-
-
-def file_url(filepath: Path) -> str:
-    """Convert a local file path to a file:// URL for HTML links.
-
-    Args:
-        filepath (Path): Local file path (backslashes allowed).
-
-    Returns:
-        str: URL in format file:///C:/path/to/file.
-    """
-    filestr = str(filepath).replace("\\", "/")
-    filestr = "file:///" + filestr
-    return filestr
-
-
-def number(numstr: Union[int, str]) -> str:
-    """Format a number with thousand separators.
-
-    Args:
-        numstr (int or str): Number to format.
-
-    Returns:
-        str: Number with commas as thousand separators.
-    """
-    return f"{numstr:,}"
-
-
-def word_count_row(file_info: list[Any], row_num: int) -> BeautifulSoup:
-    """Create an HTML table row for a single chapter's word count.
-
-    Args:
-        file_info (list): [chapter_name (str), file_path (Path), word_count (int)].
-        row_num (int): Row number (1-indexed) for display.
-
-    Returns:
-        BeautifulSoup: HTML element representing the table row.
-    """
-    chapter_name = file_info[0]
-    chapter_path = file_url(file_info[1])
-    word_count = number(file_info[2])
-
-    return BeautifulSoup(
-        f"""
-        <tr>
-            <td>{row_num}</td>
-            <td>{chapter_name}</td>
-            <td><a href="{chapter_path}" target=_blank>file</a></td>
-            <td>{word_count} words</td>
-        </tr>
-        """,
-        "html.parser",
-    )
-
-
-def total_row(total: int) -> BeautifulSoup:
-    """Create an HTML table row for the total word count.
-
-    Args:
-        total (int): Total word count across all chapters.
-
-    Returns:
-        BeautifulSoup: HTML element representing the total row.
-    """
-    return BeautifulSoup(
-        f"""
-        <tr id="total">
-            <td colspan="3">Total</td>
-            <td>{number(total)}</td>
-        </tr>
-        """,
-        "html.parser",
-    )
 
 
 def word_count_docx(filepath: Path) -> int:
@@ -661,22 +464,159 @@ def file_word_count(filepath: Path) -> int:
         )
 
 
-def backup(files_info: list[list[Any]], backup_dir: Path) -> list[Path]:
-    """Back up all source files to a subdirectory.
+def docx_to_txt(srcpath: Path, destpath: Path) -> None:
+    """Convert a .docx file to a plain text file.
 
     Args:
-        files_info (list): List of [chapter_name (str), file_path (Path)] pairs.
-        backup_dir (Path): Directory to back files up to.
+        srcpath (Path): Path to the source .docx file.
+        destpath (Path): Path for the output .txt file.
+
+    Raises:
+        Exception: If srcpath does not exist or destpath already exists.
+    """
+    if not srcpath.exists():
+        raise Exception(
+            f"Trying to convert a docx to txt, but the docx file doesn't exist: {str(srcpath)}"
+        )
+    if destpath.exists():
+        raise Exception(
+            f"Trying to convert a docx to a text file, "
+            f"but proposed destination path already exists.\n\n"
+            f"srcfile: {str(srcpath)}\ndest path: {str(destpath)}"
+        )
+
+    # need to create parent dir of file writing to or python will error
+    destpath.parent.mkdir(parents=True, exist_ok=True)
+    with open(destpath, "w", encoding=ENC) as destfile:
+        document = Document(str(srcpath))
+        for paragraph in document.paragraphs:
+            destfile.write(paragraph.text + "\n")
+
+
+# -----------------------------------------------------------------------------
+# HTML CREATION
+# -----------------------------------------------------------------------------
+
+
+def total_row(total: int) -> BeautifulSoup:
+    """Create an HTML table row for the total word count.
+
+    Args:
+        total (int): Total word count across all chapters.
 
     Returns:
-        list[Path]: Paths to the backed-up files, in the same order as files_info.
+        BeautifulSoup: HTML element representing the total row.
     """
-    destfiles = []
-    for file_info in files_info:
-        # 'backup' the file and add filepath of
-        # backed up file to destfiles
-        destfiles.append(backup_file(Path(file_info[1]), file_info[0], backup_dir))
-    return destfiles
+    return BeautifulSoup(
+        f"""
+        <tr id="total">
+            <td colspan="3">Total</td>
+            <td>{number(total)}</td>
+        </tr>
+        """,
+        "html.parser",
+    )
+
+
+def word_count_row(file_info: list[Any], row_num: int) -> BeautifulSoup:
+    """Create an HTML table row for a single chapter's word count.
+
+    Args:
+        file_info (list): [chapter_name (str), file_path (Path), word_count (int)].
+        row_num (int): Row number (1-indexed) for display.
+
+    Returns:
+        BeautifulSoup: HTML element representing the table row.
+    """
+    chapter_name = file_info[0]
+    chapter_path = file_url(file_info[1])
+    word_count = number(file_info[2])
+
+    return BeautifulSoup(
+        f"""
+        <tr>
+            <td>{row_num}</td>
+            <td>{chapter_name}</td>
+            <td><a href="{chapter_path}" target=_blank>file</a></td>
+            <td>{word_count} words</td>
+        </tr>
+        """,
+        "html.parser",
+    )
+
+
+def generate_report(
+    title: str, word_count_info: list[Any], outfile: Path, force: bool
+) -> Path:
+    """Generate an HTML report from word count data.
+
+    Args:
+        title (str): Project title.
+        word_count_info (list): List of [chapter_name (str), file_path (Path), word_count (int)].
+        outfile (Path): Output HTML file path.
+        force (bool): Overwrite output file if exists.
+
+    Returns:
+        Path: Path to the generated report file.
+    """
+    date = date_string()
+
+    contents = file_contents(TEMPLATES_DIR / "report_template.html")
+    # css and js to embed
+    css_contents = file_contents(ASSETS_SRC / "style.css")
+    js_contents = file_contents(ASSETS_SRC / "scripts.js")
+
+    contents = contents.replace("%title%", title)
+    contents = contents.replace("%date%", date)
+    # embed css and js for portability
+    contents = contents.replace("%css%", css_contents)
+    contents = contents.replace("%script%", js_contents)
+
+    soup = BeautifulSoup(contents.encode(ENC), "html.parser")
+
+    # Get <tbody> in word-count-table
+    table = soup.find(attrs={"id": "word-count-table"})
+    if not table:
+        raise RuntimeError("Could not find table with id='word-count-table'")
+    tbody = table.find("tbody")
+    if not tbody:
+        raise RuntimeError("Table missing required <tbody> element")
+
+    # append rows directly to <tbody>
+    total_words = 0
+    for idx, count_info in enumerate(word_count_info):
+        tbody.append(word_count_row(count_info, idx + 1))
+        total_words += count_info[2]
+    tbody.append(total_row(total_words))
+
+    pretty_soup = soup.prettify(formatter="html")
+    write_file(outfile, pretty_soup, force)
+    return outfile
+
+
+def make_report(
+    title: str, file_info_list: list[list[Any]], outfile: Path, force: bool
+) -> Path:
+    """Augment file info with word counts and generate the report.
+
+    Args:
+        title (str): Project title.
+        file_info_list (list): List of [chapter_name (str), file_path (Path)] pairs.
+        outfile (Path): Output HTML file path.
+        force (bool): Overwrite output file if exists.
+
+    Returns:
+        Path: Path to the generated report file (returned by generate_report).
+    """
+    for file_info in file_info_list:
+        filepath = Path(file_info[1])
+        file_info.append(file_word_count(filepath))
+    return generate_report(title, file_info_list, outfile, force)
+
+
+# -----------------------------------------------------------------------------
+# BACKUP LOGIC
+# -----------------------------------------------------------------------------
 
 
 def backup_file(chapter_filepath: Path, chapter_name: str, backup_dir: Path) -> Path:
@@ -715,33 +655,118 @@ def backup_file(chapter_filepath: Path, chapter_name: str, backup_dir: Path) -> 
     return dest_filepath
 
 
-def docx_to_txt(srcpath: Path, destpath: Path) -> None:
-    """Convert a .docx file to a plain text file.
+def backup(files_info: list[list[Any]], backup_dir: Path) -> list[Path]:
+    """Back up all source files to a subdirectory.
 
     Args:
-        srcpath (Path): Path to the source .docx file.
-        destpath (Path): Path for the output .txt file.
+        files_info (list): List of [chapter_name (str), file_path (Path)] pairs.
+        backup_dir (Path): Directory to back files up to.
+
+    Returns:
+        list[Path]: Paths to the backed-up files, in the same order as files_info.
+    """
+    destfiles = []
+    for file_info in files_info:
+        # 'backup' the file and add filepath of
+        # backed up file to destfiles
+        destfiles.append(backup_file(Path(file_info[1]), file_info[0], backup_dir))
+    return destfiles
+
+
+def setup_backup(input_data: list[list[str]], backup_dir: Path) -> list[list[str]]:
+    """Back up input files and return input data referencing the copies.
+
+    Copies each source file into backup_dir, then replaces the
+    original file paths in input_data with the paths to the
+    backed-up copies. This ensures the report is generated from the
+    isolated backup files rather than the original sources.
+
+    Args:
+        input_data: List of chapters, where each entry is
+            [chapter_name, source_filepath]
+        backup_dir: Directory to place the backed-up files.
+
+    Returns:
+        A new list with the same chapter names and the paths to the
+        backed-up file copies.
 
     Raises:
-        Exception: If srcpath does not exist or destpath already exists.
+        RuntimeError: If backup_dir is None or not absolute.
     """
-    if not srcpath.exists():
-        raise Exception(
-            f"Trying to convert a docx to txt, but the docx file doesn't exist: {str(srcpath)}"
-        )
-    if destpath.exists():
-        raise Exception(
-            f"Trying to convert a docx to a text file, "
-            f"but proposed destination path already exists.\n\n"
-            f"srcfile: {str(srcpath)}\ndest path: {str(destpath)}"
-        )
+    if not backup_dir:
+        raise RuntimeError("Bug: --backup specified, but backup_dir not determined")
+    if not backup_dir.is_absolute():
+        raise RuntimeError(f"Backup dir not absolute: {backup_dir}")
 
-    # need to create parent dir of file writing to or python will error
-    destpath.parent.mkdir(parents=True, exist_ok=True)
-    with open(destpath, "w", encoding=ENC) as destfile:
-        document = Document(str(srcpath))
-        for paragraph in document.paragraphs:
-            destfile.write(paragraph.text + "\n")
+    # Copy all source files into the backup directory
+    backup_files = backup(input_data, backup_dir)
+    new_idata = []
+
+    # Replace source paths with backup paths, preserving chapter names
+    list_print = "\n".join(map(str, input_data))  # to pretty print list data
+    logger.debug(f"original input data:")
+    logger.debug(list_print)
+    for original, backed_up in zip(input_data, backup_files):
+        new_idata.append([original[0], backed_up])
+    input_data = new_idata
+    list_print = "\n".join(map(str, input_data))
+    logger.debug(f"new input data:")
+    logger.debug(list_print)
+
+    return input_data
+
+
+# -----------------------------------------------------------------------------
+# MAIN ORCHESTRATION
+# -----------------------------------------------------------------------------
+
+
+def main() -> None:
+    """Main entry point for the word-count-reporter CLI.
+
+    Parses command-line arguments using argparse, which automatically
+    reads from sys.argv. This function is called by:
+
+    - The console script after pip install: word-count-reporter
+    - Direct execution: python src/word_count_reporter/cli.py
+    - Module execution: python -m word_count_reporter
+
+    Returns:
+        None
+    """
+    # handle CLI
+    args = parse_args()
+
+    # set up logger
+    enable_logging(args.log_level)
+
+    # parse input file
+    input_file = args.input.resolve()  # resolve rel cwd
+    # input_data is list of lists.
+    # inner lists correspond to chapters: [name, path to file]
+    title, input_data = parse_input_file(input_file)
+
+    # determine paths for HTML report + backup dir
+    output_dir = args.output.resolve() if args.output else None  # resolve rel cwd
+    report_file, backup_dir = determine_output_paths(
+        output_dir, title, args.use_title, args.no_timestamp, args.backup, REPORT_DIR
+    )
+
+    # backup input files
+    if args.backup:
+        # setup_backup returns version of input_data pointing to backed up
+        # files, so can read from up files during report generation
+        input_data = setup_backup(input_data, backup_dir)
+
+    # create the HTML report
+    report = str(make_report(title, input_data, report_file, args.FORCE))
+
+    # print filepath to created report
+    logger.info(report)
+
+    # optionally open in browser
+    if not args.no_browser:
+        webbrowser.open(report)
 
 
 if __name__ == "__main__":
