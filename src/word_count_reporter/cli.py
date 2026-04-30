@@ -10,7 +10,7 @@ Usage:
     python word_count_reporter.py INPUT_FILE [OPTIONS]
 
 Input file format:
-    The input file must be parsable by the custom `inputfile` module.
+    The input file must be parsable by the custom inputfile module.
     Expected structure: title line followed by chapter entries, each with
     a chapter name and file path.
 
@@ -288,7 +288,7 @@ def setup_backup(input_data: list[list[str]], backup_dir: Path) -> list[list[str
         backed-up file copies.
 
     Raises:
-        RuntimeError: If backup_dir`` is None or not absolute.
+        RuntimeError: If backup_dir is None or not absolute.
     """
     if not backup_dir:
         raise RuntimeError("Bug: --backup specified, but backup_dir not determined")
@@ -319,9 +319,9 @@ def main() -> None:
     Parses command-line arguments using argparse, which automatically
     reads from sys.argv. This function is called by:
 
-    - The console script after pip install: `word-count-reporter`
-    - Direct execution: `python src/word_count_reporter/cli.py`
-    - Module execution: `python -m word_count_reporter`
+    - The console script after pip install: word-count-reporter
+    - Direct execution: python src/word_count_reporter/cli.py
+    - Module execution: python -m word_count_reporter
 
     Returns:
         None
