@@ -695,7 +695,7 @@ def backup_file(chapter_filepath: Path, chapter_name: str, backup_dir: Path) -> 
         Exception: If file extension is not .txt or .docx.
     """
     logger.debug(
-        f"\n\n*chapter name: {chapter_name}\n* srcfile: {str(chapter_filepath)}\n* dest dir: {str(backup_dir)}"
+        f"Back up:\n\t* chapter: {chapter_name}\n\t* src    : {str(chapter_filepath)}\n\t* dest   : {str(backup_dir)}"
     )
     extension = chapter_filepath.suffix
     dest_filepath = None  # will be a Path object
