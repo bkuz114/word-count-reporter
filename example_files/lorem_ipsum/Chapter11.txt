@@ -1,7 +1,3 @@
-== Chapter: Nullam rhoncus tempor  ==
-
-
-
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum varius commodo nisi, eget consectetur dui pellentesque ac. Sed a imperdiet felis. Integer vitae auctor erat. Sed non fermentum nisi. Nunc ultricies quam justo, vel tincidunt ex sodales vitae. Etiam ut consectetur massa. Ut faucibus sodales arcu, sit amet pretium metus fermentum eu. Sed id sagittis lectus, sed tincidunt ipsum. Aenean in mauris non neque pharetra maximus sed sit amet justo.
 
 Sed eget ligula libero. Maecenas et aliquet purus, sit amet luctus neque. Donec eleifend pellentesque aliquam. Suspendisse pharetra, sapien id venenatis mollis, dui est eleifend ante, euismod dignissim turpis diam vel dolor. Phasellus id ipsum eros. Ut risus ex, commodo in ultrices vitae, euismod id purus. Vivamus ut ante mi. Nunc et mi quis justo sagittis semper. Quisque a massa tincidunt, accumsan purus non, auctor felis. Phasellus volutpat finibus neque scelerisque bibendum. Mauris auctor mi sit amet convallis dictum.

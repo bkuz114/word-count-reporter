@@ -1,5 +1,3 @@
-== Chapter 10: Mauris eget ==
-
 Nam elit nunc, scelerisque in porttitor at, suscipit et arcu. Suspendisse ac nisl eget ante faucibus iaculis. Aenean iaculis vel ipsum et condimentum. Donec molestie porttitor mi, nec euismod justo ullamcorper vitae. Maecenas dapibus quam hendrerit congue semper. Nulla eget nisi non odio mattis accumsan. Vivamus vel arcu id eros iaculis facilisis. Sed scelerisque pulvinar elit a semper. Vivamus nibh velit, gravida et laoreet vitae, mattis sit amet mi.
 
 Suspendisse interdum eu turpis at ultrices. Nulla ornare hendrerit est. Sed aliquam, ex et posuere molestie, turpis neque auctor felis, non cursus metus enim rutrum sem. Mauris tempus, urna at lobortis accumsan, dolor metus tristique augue, faucibus pharetra enim ante eu nulla. Donec faucibus est eget iaculis ultrices. Proin nec efficitur mi, sed venenatis ante. Integer nec velit eget dolor ultricies iaculis.

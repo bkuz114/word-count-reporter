@@ -1,5 +1,3 @@
-== Chapter 6: Etiam volutpat --
-
 Etiam volutpat scelerisque scelerisque. Curabitur vel imperdiet mi. Mauris sed dolor sed magna ornare interdum. Praesent ac elit lorem. Mauris id rhoncus metus. Etiam congue quam tortor, quis aliquam nisi lobortis non. Ut vulputate ipsum vitae nisl dignissim luctus.
 
 Nunc at purus et odio tempor efficitur in id leo. Donec viverra eu lacus in ornare. Maecenas viverra tortor eget tortor consectetur sagittis. Maecenas vitae vestibulum mauris. Donec sed neque a odio cursus venenatis. Suspendisse sollicitudin mauris magna, eget placerat mi eleifend vel. In sit amet enim commodo, vulputate nunc vel, dictum enim. In odio urna, convallis blandit varius eget, porta a tellus. Maecenas rutrum odio ut condimentum facilisis. Sed gravida dignissim justo, sit amet porttitor tellus. Aliquam lacinia ut arcu quis fringilla. Ut quis feugiat lacus. Praesent porta sollicitudin ipsum, eu imperdiet odio vehicula ac. Pellentesque lectus nulla, gravida a orci mattis, aliquam molestie tellus. Duis tincidunt mollis ultrices.
