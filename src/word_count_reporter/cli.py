@@ -622,10 +622,10 @@ def backup_file(filepath: Path, backup_dir: Path) -> Path:
         Exception: If file extension is not .txt or .docx.
     """
     logger.debug(f"Back up:\n\t* file  : {filepath}\n\t* dest   : {str(backup_dir)}")
-    extension = chapter_filepath.suffix
+    extension = filepath.suffix
     dest_filepath = None  # will be a Path object
     if extension == ".docx":
-        filename_no_ext = chapter_filepath.stem
+        filename_no_ext = filepath.stem
         dest_filepath = backup_dir / Path(filename_no_ext + ".txt")
         docx_to_txt(filepath, dest_filepath)
     elif extension == ".txt":
@@ -665,7 +665,7 @@ def backup_files(doc: Document, backup_dir: Path) -> Document:
     # Back up each file and replace the filepath
     for chapter in doc.chapters:
         for file_ref in chapters.files:
-            new_path = backup_file(file_ref.path, chapter.name, backup_dir)
+            new_path = backup_file(file_ref.path, backup_dir)
         file_ref.path = new_path
 
     return doc
