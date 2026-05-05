@@ -3,7 +3,7 @@
 
 This script reads an input file containing a project title and a list of
 chapters with their corresponding file paths, counts the words in each
-document (.txt or .docx), and generates an HTML report with a table of
+document (.txt, .rtf, .docx), and generates an HTML report with a table of
 word counts.
 
 Usage:
@@ -17,6 +17,7 @@ Input file format:
 Dependencies:
     - python-docx: for reading .docx files
     - beautifulsoup4: for HTML generation
+    - striprtf: for converting .rtf to raw text
     - inputfile (local module): for parsing the input file format
     - report_template.html: must exist in the working directory
 
@@ -35,6 +36,7 @@ import argparse
 import shutil
 import logging
 from pathlib import Path
+from striprtf.striprtf import rtf_to_text
 
 # Allow direct execution from source during development (e.g., `python cli.py`)
 # by adding the `src/` directory to Python's import path. This block only runs
@@ -63,7 +65,7 @@ ENC = "utf-8"
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Generate a word count report from text and DOCX documents.",
+        description="Generate a word count report from .txt, .docx, and .rtf documents.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -87,9 +89,8 @@ def parse_args():
         action="store_true",
         help="Backup input files as text files in the same "
         "directory holding the report. Notes: "
-        "(1) if any of the files are .docx files, will "
-        "convert them to text files; .txt files will be "
-        "backed up as is; other file type not supported."
+        " (1) .docx and .rtf will be converted to text files"
+        ".txt files backed up as is; other file types not supported."
         " (2) if --backup and --output both given, "
         "then --output should be the directory for both "
         "the report and the backed up "
@@ -398,6 +399,51 @@ def word_count_docx(filepath: Path) -> int:
     return num_words
 
 
+def rtf_to_raw_text(filepath: Path) -> str:
+    """Extract raw text from .rtf file, preserving spacing
+
+    Behavior:
+    - strips rtf headers
+    - preserves Cyrillic
+    - formatting destroyed (bold, italic, etc.)
+    - spacing preserved (newlines, etc.)
+
+    Args:
+        filepath (Path): Path to the .rtf file.
+
+    Returns:
+        string of raw text in rtf file
+    """
+    if not filepath.exists():
+        raise Exception(f".rtf file {filepath} does not exist!")
+    if not filepath.suffix == ".rtf":
+        raise Exception(f"File is not .rtf! {filepath}")
+
+    with open(filepath, "rb") as f:
+        rtf_bytes = f.read()
+
+    # Decode as ascii, ignoring errors (RTF is 7-bit)
+    rtf_bytes = rtf_bytes.decode("ascii", errors="ignore")
+    return rtf_to_text(rtf_bytes)
+
+
+def word_count_rtf(filepath: Path) -> int:
+    """Count words in a .rtf file.
+
+    Args:
+        filepath (Path): Path to the .rtf file.
+
+    Returns:
+        int: Number of words in the rtf file
+    """
+    if not filepath.exists():
+        raise Exception(f".rtf file {filepath} does not exist!")
+    if not filepath.suffix == ".rtf":
+        raise Exception(f"File is not .rtf! {filepath}")
+
+    return len(rtf_to_raw_text(filepath).split())
+
+
 def word_count_txt(filepath: Path) -> int:
     """Count words in a .txt file.
 
@@ -419,7 +465,7 @@ def file_word_count(filepath: Path) -> int:
     """Dispatch word counting based on file extension.
 
     Args:
-        filepath (Path): Path to the file (.txt or .docx).
+        filepath (Path): Path to the file.
 
     Returns:
         int: Word count.
@@ -433,12 +479,14 @@ def file_word_count(filepath: Path) -> int:
     extension = filepath.suffix
     if extension == ".txt":
         return word_count_txt(filepath)
-    if extension == ".docx":
+    elif extension == ".docx":
         return word_count_docx(filepath)
+    elif extension == ".rtf":
+        return word_count_rtf(filepath)
     else:
         raise Exception(
             f"invalid filetype {extension}. "
-            "Only .txt and .docx "
+            "Only .txt, .rtf, and .docx "
             "currently supported"
         )
 
@@ -470,6 +518,36 @@ def docx_to_txt(srcpath: Path, destpath: Path) -> None:
         document = Docx(str(srcpath))
         for paragraph in document.paragraphs:
             destfile.write(paragraph.text + "\n")
+
+
+def rtf_to_txt_file(srcpath: Path, destpath: Path) -> None:
+    """Convert a .rtf file to a plain text file.
+
+    Args:
+        srcpath (Path): Path to the source .rtf file.
+        destpath (Path): Path for the output .txt file.
+
+    Raises:
+        Exception: If srcpath does not exist or destpath already exists.
+    """
+    if not srcpath.exists():
+        raise Exception(
+            f"Trying to convert a .rtf file to .txt, but the .rtf file doesn't exist: {str(srcpath)}"
+        )
+    if destpath.exists():
+        raise Exception(
+            f"Trying to convert a .rtf file to a .txt file, "
+            f"but proposed destination path already exists.\n\n"
+            f"srcfile: {str(srcpath)}\ndest path: {str(destpath)}"
+        )
+
+    # raw text from rtf file
+    rtf_text = rtf_to_raw_text(srcpath)
+
+    # need to create parent dir of file writing to or python will error
+    destpath.parent.mkdir(parents=True, exist_ok=True)
+    with open(destpath, "w", encoding=ENC) as destfile:
+        destfile.write(rtf_text)
 
 
 # -----------------------------------------------------------------------------
@@ -607,7 +685,7 @@ def make_report(title: str, files: list[FileRef], outfile: Path, force: bool) ->
 
 
 def backup_file(filepath: Path, backup_dir: Path) -> Path:
-    """Back up a single file, converting .docx to .txt if needed.
+    """Back up a single file, converting .docx and .rtf to .txt if needed.
 
     Args:
         filepath (Path): Path to the source file.
@@ -617,7 +695,7 @@ def backup_file(filepath: Path, backup_dir: Path) -> Path:
         Path: Path to the backed-up file.
 
     Raises:
-        Exception: If file extension is not .txt or .docx.
+        Exception: If file extension is not supported.
     """
     logger.debug(f"Back up:\n\t* file  : {filepath}\n\t* dest   : {str(backup_dir)}")
     extension = filepath.suffix
@@ -630,8 +708,12 @@ def backup_file(filepath: Path, backup_dir: Path) -> Path:
         filename = filepath.name
         dest_filepath = backup_dir / filename
         shutil.copyfile(str(filepath), str(dest_filepath))
+    elif extension == ".rtf":
+        filename_no_ext = filepath.stem
+        dest_filepath = backup_dir / Path(filename_no_ext + ".rtf")
+        rtf_to_txt_file(filepath, dest_filepath)
     else:
-        raise Exception("file to backup isn't .docx or .txt")
+        raise Exception("file to backup isn't .docx, .txt, or .rtf")
     logger.debug(f"\tFile backed up to: {str(dest_filepath)}")
     return dest_filepath
 

@@ -32,6 +32,7 @@ classifiers = [
 dependencies = [
     "beautifulsoup4>=4.11.1",
     "python-docx>=1.0.0",
+    "striprtf>=0.0.32",
 ]
 
 [project.optional-dependencies]
