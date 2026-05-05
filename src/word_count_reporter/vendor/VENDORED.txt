@@ -1,10 +1,11 @@
 # Vendored Dependencies for word-count-reporter
-# Last updated: 2026-04-30
+# Last updated: 2026-05-04
 # See CONTRIBUTING.md for vendoring policy
 
 ## inputfile.py: https://github.com/bkuz114/inputfile-parser
-- Version: 1.0.0+ (commit 1e21de5)
-  https://github.com/bkuz114/inputfile-parser/commit/7329df10ab1486fec8f20c53856ba9937887d218
+- Version: 1.0.0+ (commit 8064a8b)
+  8064a8b feat: add parent back-references to FileRef, Chapter, and Part
+  https://github.com/bkuz114/inputfile-parser/commit/8064a8baa68c659c14829aaaa84c4d181fc072f5
 - Original license: MIT
 - Files vendored:
   - inputfile.py
