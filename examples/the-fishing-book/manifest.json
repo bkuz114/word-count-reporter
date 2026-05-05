@@ -1,0 +1,29 @@
+{
+  "title": "The Fishing Book",
+  "root": "docs/",
+  "description": "Practical wisdom from bank, boat, and shore",
+  "author": "Izaak Walton-Smith",
+  "version": "1.0",
+  "chapters": [
+    {
+      "name": "Reading the Water",
+      "files": ["01-reading-the-water.txt", "content.rtf"]
+    },
+    {
+      "name": "Knots That Hold",
+      "files": ["02-knots-that-hold.md", "02a-palomar-diagram.docx"]
+    },
+    {
+      "name": "The Ethics of Catch and Release",
+      "files": ["03-catch-and-release.txt"]
+    },
+    {
+      "name": "The Weather Whisperer",
+      "files": ["04-the-weather-whisperer.rtf"]
+    },
+    {
+      "name": "The Angler's Toolkit",
+      "files": ["05-the-anglers-toolkit.docx"]
+    }
+  ]
+}
