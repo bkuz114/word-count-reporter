@@ -1,0 +1,31 @@
+{
+  "title": "My Fishing Book (with parts)",
+  "root": "./lorem_ipsum",
+  "parts": [
+    {
+      "name": "Part I",
+      "chapters": [
+		{
+		  "name": "Introduction",
+		  "files": ["test.docx"]
+        }
+      ]
+    },
+    {
+      "name": "Part Ii",
+	  "chapters": [
+		{
+		  "name": "Freshwater Fish",
+		  "files": ["Chapter1.txt", "Chapter2.txt"]
+		},
+		{
+		  "name": "Fly Fishing",
+		  "files": [{"name": "tackle", "path": "Chapter3.txt"}, "Chapter4.txt"]
+		},
+		{
+		   "files": ["Chapter5.txt"]
+		}
+	  ]
+    }
+  ]
+}
