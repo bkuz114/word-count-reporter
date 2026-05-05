@@ -2,7 +2,7 @@
 /**
  * Word Count Reporter - Web Upload Interface
  *
- * Receives uploaded .txt input files, validates them, and invokes the
+ * Receives uploaded .json input files, validates them, and invokes the
  * Python word_count_reporter.py script to generate an HTML report.
  *
  * Security: Implements file validation, command escaping, output encoding,
@@ -17,7 +17,7 @@
 define('MAX_FILE_SIZE', 500 * 1024); // 500KB
 define('TEMP_DIR', __DIR__ . '/tmp');  // Isolated directory
 define('PYTHON_SCRIPT', dirname(__DIR__) . '/src/word_count_reporter/cli.py');
-define('ALLOWED_EXTENSIONS', ['txt']);
+define('ALLOWED_EXTENSIONS', ['json']);
 
 // Ensure temp directory exists
 if (!is_dir(TEMP_DIR)) {
@@ -75,12 +75,12 @@ function validate_upload(): void {
     // Validate extension only (rely on Python for content validation)
     $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     if (!in_array($extension, ALLOWED_EXTENSIONS)) {
-        $failures[] = 'Invalid file type. Only .txt files are allowed.';
+        $failures[] = 'Invalid file type. Only .json files are allowed.';
         return;
     }
 
     // Create unique temporary filename
-    $tmp_file = TEMP_DIR . '/' . bin2hex(random_bytes(16)) . '.txt';
+    $tmp_file = TEMP_DIR . '/' . bin2hex(random_bytes(16)) . '.json';
 
     if (!move_uploaded_file($file['tmp_name'], $tmp_file)) {
         $failures[] = 'Failed to save uploaded file.';
