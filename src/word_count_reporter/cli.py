@@ -3,8 +3,8 @@
 
 This script reads an input file containing a project title and a list of
 chapters with their corresponding file paths, counts the words in each
-document (.txt, .rtf, .docx), and generates an HTML report with a table of
-word counts.
+document (.txt, .rtf, .docx, .md, .markdown), and generates an HTML report
+with a table of word counts.
 
 Usage:
     python word_count_reporter.py INPUT_FILE [OPTIONS]
@@ -18,6 +18,7 @@ Dependencies:
     - python-docx: for reading .docx files
     - beautifulsoup4: for HTML generation
     - striprtf: for converting .rtf to raw text
+    - markdown: for converting .md to html (then counting words)
     - inputfile (local module): for parsing the input file format
     - report_template.html: must exist in the working directory
 
@@ -35,6 +36,7 @@ import sys
 import argparse
 import shutil
 import logging
+import markdown
 from pathlib import Path
 from striprtf.striprtf import rtf_to_text
 
@@ -60,10 +62,22 @@ TEMPLATES_DIR = SCRIPT_DIR / "templates"
 # dir where js and css to embed live
 ASSETS_SRC = TEMPLATES_DIR / "assets"
 
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
+
 ENC = "utf-8"
 
-SUPPORTED_FILETYPES = [".txt.", ".docx", ".rtf"]
+SUPPORTED_FILETYPES = [".txt.", ".docx", ".rtf", ".md", ".markdown"]
 SUPPORTED_FILETYPES_STRING = ", ".join(SUPPORTED_FILETYPES)
+
+# Markdown extensions
+MD_EXTENSIONS = [
+    "tables",
+    "fenced_code",
+    "codehilite",
+    "smarty",
+]
 
 
 def parse_args():
@@ -464,6 +478,32 @@ def word_count_txt(filepath: Path) -> int:
     return num_words
 
 
+def word_count_markdown(filepath: Path) -> int:
+    """Count words in a markdown file.
+
+    Args:
+        filepath (Path): Path to the markdown file.
+
+    Returns:
+        int: Number of words (ignoring markdown syntax)
+    """
+    valid_extensions = [".md", ".markdown"]
+    if not filepath.exists():
+        raise Exception(f".md file {filepath} does not exist!")
+    if filepath.suffix.lower() not in valid_extensions:
+        raise Exception(f"File is not a markdown file! {filepath}")
+
+    # extract content
+    md_content = file_contents(filepath)
+
+    # Convert markdown to HTML (to get rid of markdown formatting)
+    html = markdown.markdown(md_content, extensions=MD_EXTENSIONS)
+
+    # strip HTML to get raw text
+    text = BeautifulSoup(html, "html.parser").get_text()
+    return len(text.split())
+
+
 def file_word_count(filepath: Path) -> int:
     """Dispatch word counting based on file extension.
 
@@ -486,6 +526,8 @@ def file_word_count(filepath: Path) -> int:
         return word_count_docx(filepath)
     elif extension == ".rtf":
         return word_count_rtf(filepath)
+    elif extension == ".md" or extension == ".markdown":
+        return word_count_markdown(filepath)
     else:
         raise Exception(
             f"invalid filetype {extension}. "
