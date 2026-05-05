@@ -62,10 +62,13 @@ ASSETS_SRC = TEMPLATES_DIR / "assets"
 
 ENC = "utf-8"
 
+SUPPORTED_FILETYPES = [".txt.", ".docx", ".rtf"]
+SUPPORTED_FILETYPES_STRING = ", ".join(SUPPORTED_FILETYPES)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Generate a word count report from .txt, .docx, and .rtf documents.",
+        description=f"Generate a word count report from {SUPPORTED_FILETYPES_STRING} documents.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -486,7 +489,7 @@ def file_word_count(filepath: Path) -> int:
     else:
         raise Exception(
             f"invalid filetype {extension}. "
-            "Only .txt, .rtf, and .docx "
+            "Only {SUPPORTED_FILETYPES_STRING} "
             "currently supported"
         )
 
@@ -713,7 +716,7 @@ def backup_file(filepath: Path, backup_dir: Path) -> Path:
         dest_filepath = backup_dir / Path(filename_no_ext + ".rtf")
         rtf_to_txt_file(filepath, dest_filepath)
     else:
-        raise Exception("file to backup isn't .docx, .txt, or .rtf")
+        raise Exception(f"file to backup isn't {SUPPORTED_FILETYPES_STRING}")
     logger.debug(f"\tFile backed up to: {str(dest_filepath)}")
     return dest_filepath
 
