@@ -120,6 +120,7 @@ function run_report(): void {
     $pycall = escapeshellcmd('python') 
         . ' ' . escapeshellarg(PYTHON_SCRIPT)
         . ' ' . escapeshellarg($tmp_file)
+        . ' --browser'
         . ' --use-title';
 
     if (isset($_POST['backup']) && $_POST['backup'] === 'on') {
