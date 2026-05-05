@@ -3,11 +3,11 @@
 [![PyPI version](https://badge.fury.io/py/word-count-reporter.svg)](https://pypi.org/project/word-count-reporter/)
 [![Python versions](https://img.shields.io/pypi/pyversions/word-count-reporter.svg)](https://pypi.org/project/word-count-reporter/)
 
-Generate offline HTML word count reports from collections of text (.txt), Microsoft Word (.docx), and Rich Text Format (.rtf) documents.
+Generate offline HTML word count reports from collections of text (.txt), Microsoft Word (.docx), Rich Text Format (.rtf), and markdown (.md, .markdown) documents.
 
 ## Features
 
-- Counts words in `.txt`, `.docx`, and `.rtf` files
+- Counts words in `.txt`, `.docx`, `.rtf`, `.md`, and `.markdown` files
 - Generates a sortable HTML report with chapter-by-chapter word counts
 - Optionally backs up source files as plain text alongside the report
 - Self-contained HTML report (no external dependencies after generation)
@@ -310,7 +310,7 @@ When using the command line, the report automatically opens in your default web 
 
 ### Unsupported file type
 
-Only `.txt`, `.docx`, and `.rtf` files are supported. Other file types will raise an error.
+Only `.txt`, `.docx`, `.rtf`, `.md`, and `.markdown` files are currently supported. Other file types will raise an error.
 
 ### Output file exists
 
