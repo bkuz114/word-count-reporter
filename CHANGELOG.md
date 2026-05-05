@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `example_inputfile.json` (JSON format example)
 - `vendor/__init__.py` and `vendor/VENDORED.md`
 - Support for per-file custom display names
+- Support for .rtf, .md, and .markdown documents
 
 ## [1.0.0] - 2026-04-28
 
