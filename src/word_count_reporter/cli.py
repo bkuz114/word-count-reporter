@@ -416,7 +416,7 @@ def rtf_to_raw_text(filepath: Path) -> str:
     """
     if not filepath.exists():
         raise Exception(f".rtf file {filepath} does not exist!")
-    if not filepath.suffix == ".rtf":
+    if not filepath.suffix.lower() == ".rtf":
         raise Exception(f"File is not .rtf! {filepath}")
 
     with open(filepath, "rb") as f:
@@ -438,7 +438,7 @@ def word_count_rtf(filepath: Path) -> int:
     """
     if not filepath.exists():
         raise Exception(f".rtf file {filepath} does not exist!")
-    if not filepath.suffix == ".rtf":
+    if not filepath.suffix.lower() == ".rtf":
         raise Exception(f"File is not .rtf! {filepath}")
 
     return len(rtf_to_raw_text(filepath).split())
@@ -476,7 +476,7 @@ def file_word_count(filepath: Path) -> int:
     if not filepath.exists():
         raise Exception(f"File {str(filepath)} does not exist!")
 
-    extension = filepath.suffix
+    extension = filepath.suffix.lower()
     if extension == ".txt":
         return word_count_txt(filepath)
     elif extension == ".docx":
@@ -698,7 +698,7 @@ def backup_file(filepath: Path, backup_dir: Path) -> Path:
         Exception: If file extension is not supported.
     """
     logger.debug(f"Back up:\n\t* file  : {filepath}\n\t* dest   : {str(backup_dir)}")
-    extension = filepath.suffix
+    extension = filepath.suffix.lower()
     dest_filepath = None  # will be a Path object
     if extension == ".docx":
         filename_no_ext = filepath.stem
