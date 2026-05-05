@@ -121,9 +121,9 @@ def parse_args():
         help="Don't timestamp output file",
     )
     parser.add_argument(
-        "--no-browser",
+        "--browser",
         action="store_true",
-        help="Don't open browser once report is generated.",
+        help="Open report in browser upon completion.",
     )
     parser.add_argument(
         "-u",
@@ -849,7 +849,7 @@ def main() -> None:
     logger.info(report)
 
     # optionally open in browser
-    if not args.no_browser:
+    if args.browser:
         webbrowser.open(report)
 
 
