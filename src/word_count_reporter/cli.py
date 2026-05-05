@@ -573,14 +573,12 @@ def generate_report(
     return outfile
 
 
-def make_report(
-    title: str, document: list[list[Any]], outfile: Path, force: bool
-) -> Path:
+def make_report(title: str, files: list[FileRef], outfile: Path, force: bool) -> Path:
     """Augment file info with word counts and generate the report.
 
     Args:
         title (str): Project title.
-        document (list): Document object for the inputfile
+        files (list): list of FileRef objects derived from parsing input JSON
         outfile (Path): Output HTML file path.
         force (bool): Overwrite output file if exists.
 
@@ -588,18 +586,18 @@ def make_report(
         Path: Path to the generated report file (returned by generate_report).
     """
     files_info = []
-    for chapter in document.chapters:
-        # get all files for that chapter
-        for file_ref in chapter.files:
-            filepath = file_ref.path
-            filename = chapter.name
-            # if this file has its own name, append it, else use its filename
-            if file_ref.name:
-                filename = f"{filename}: {file_ref.name}"
-            else:
-                filename = f"{filename}: {filepath.name}"
-            word_count = file_word_count(filepath)
-            files_info.append([filename, filepath, word_count])
+
+    # get all files for that chapter
+    for file_ref in files:
+        filepath = file_ref.path
+        filename = file_ref.parent.name  # name of parent chapter
+        # if this file has its own name, append it, else use its filename
+        if file_ref.name:
+            filename = f"{filename}: {file_ref.name}"
+        else:
+            filename = f"{filename}: {filepath.name}"
+        word_count = file_word_count(filepath)
+        files_info.append([filename, filepath, word_count])
     return generate_report(title, files_info, outfile, force)
 
 
@@ -638,7 +636,7 @@ def backup_file(filepath: Path, backup_dir: Path) -> Path:
     return dest_filepath
 
 
-def backup_files(doc: Document, backup_dir: Path) -> Document:
+def backup_files(files: list[FileRef], backup_dir: Path) -> Document:
     """Back up input files and return input data referencing the copies.
 
     Copies each source file into backup_dir, then replaces the
@@ -647,8 +645,7 @@ def backup_files(doc: Document, backup_dir: Path) -> Document:
     isolated backup files rather than the original sources.
 
     Args:
-        input_data: List of chapters, where each entry is
-            [chapter_name, source_filepath]
+        files (list): list of FileRef objects derived from parsing input JSON
         backup_dir: Directory to place the backed-up files.
 
     Returns:
@@ -663,12 +660,9 @@ def backup_files(doc: Document, backup_dir: Path) -> Document:
         raise RuntimeError(f"Backup dir not absolute: {backup_dir}")
 
     # Back up each file and replace the filepath
-    for chapter in doc.chapters:
-        for file_ref in chapters.files:
-            new_path = backup_file(file_ref.path, backup_dir)
-        file_ref.path = new_path
-
-    return doc
+    for file_ref in files:
+        new_path = backup_file(file_ref.path, backup_dir)
+    file_ref.path = new_path
 
 
 # -----------------------------------------------------------------------------
@@ -706,14 +700,23 @@ def main() -> None:
         output_dir, title, args.use_title, args.no_timestamp, args.backup, REPORT_DIR
     )
 
+    # get all files in document
+    # (document has either .chapters or .parts populated, not both)
+    files = []
+    for chapter in doc.chapters:
+        files.extend(chapter.files)
+    for part in doc.parts:
+        for chapter in part.chapters:
+            files.extend(chapter.files)
+
     # backup input files
     if args.backup:
         # setup_backup replaces filepaths in Document to backed up
         # files, so can read from up files during report generation
-        doc = backup_files(input_data, backup_dir)
+        backup_files(files, backup_dir)
 
     # create the HTML report
-    report = str(make_report(title, doc, report_file, args.FORCE))
+    report = str(make_report(title, files, report_file, args.FORCE))
 
     # print filepath to created report
     logger.info(report)
