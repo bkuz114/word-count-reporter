@@ -3,11 +3,11 @@
 [![PyPI version](https://badge.fury.io/py/word-count-reporter.svg)](https://pypi.org/project/word-count-reporter/)
 [![Python versions](https://img.shields.io/pypi/pyversions/word-count-reporter.svg)](https://pypi.org/project/word-count-reporter/)
 
-Generate offline HTML word count reports from collections of text (.txt) and/or Microsoft Word (.docx) documents.
+Generate offline HTML word count reports from collections of text (.txt), Microsoft Word (.docx), and Rich Text Format (.rtf) documents.
 
 ## Features
 
-- Counts words in `.txt` and `.docx` files
+- Counts words in `.txt`, `.docx`, and `.rtf` files
 - Generates a sortable HTML report with chapter-by-chapter word counts
 - Optionally backs up source files as plain text alongside the report
 - Self-contained HTML report (no external dependencies after generation)
@@ -86,7 +86,7 @@ Whether installed via pip or run from source, the same options apply:
 |--------|-------------|
 | `INPUTFILE` | Input file describing the project title and chapter files |
 | `-o OUTPUT`, `--output OUTPUT` | Output file path. If not supplied, auto-generated from title and timestamp. When used with `--backup`, this specifies a directory. |
-| `-b`, `--backup` | Backup source files as text files in the report directory. `.docx` files are converted to `.txt`; `.txt` files are copied as-is. |
+| `-b`, `--backup` | Backup source files as text files in the report directory. `.docx` and `.rtf` files are converted to `.txt`; `.txt` files are copied as-is. |
 | `-t`, `--no-timestamp` | Omit timestamp from auto-generated output filename. |
 | `-u`, `--use-title` | Use project title in auto-generated output filename. |
 | `--no-browser` | Prevents browser from automatically opening with the report upon completion. |
@@ -310,7 +310,7 @@ When using the command line, the report automatically opens in your default web 
 
 ### Unsupported file type
 
-Only `.txt` and `.docx` files are supported. Other file types will raise an error.
+Only `.txt`, `.docx`, and `.rtf` files are supported. Other file types will raise an error.
 
 ### Output file exists
 
