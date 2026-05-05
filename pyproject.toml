@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "word-count-reporter"
 dynamic = ["version"]
-description = "Generate HTML word count reports from text and DOCX documents"
+description = "Generate HTML word count reports from a collection of .txt, .docx, .rtf, and markdown documents."
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
