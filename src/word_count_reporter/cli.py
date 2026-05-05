@@ -716,7 +716,7 @@ def make_report(title: str, files: list[FileRef], outfile: Path, force: bool) ->
         filename = file_ref.parent.name  # name of parent chapter
         # if this file has its own name, append it, else use its filename
         if file_ref.name:
-            filename = f"{filename}: {file_ref.name}"
+            filename = f"{file_ref.name}"
         else:
             filename = f"{filename}: {filepath.name}"
         word_count = file_word_count(filepath)
