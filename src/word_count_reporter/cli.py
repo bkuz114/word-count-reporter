@@ -68,7 +68,7 @@ ASSETS_SRC = TEMPLATES_DIR / "assets"
 
 ENC = "utf-8"
 
-SUPPORTED_FILETYPES = [".txt.", ".docx", ".rtf", ".md", ".markdown"]
+SUPPORTED_FILETYPES = [".txt", ".docx", ".rtf", ".md", ".markdown"]
 SUPPORTED_FILETYPES_STRING = ", ".join(SUPPORTED_FILETYPES)
 
 # Markdown extensions
