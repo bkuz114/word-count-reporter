@@ -3,9 +3,8 @@
 # See CONTRIBUTING.md for vendoring policy
 
 ## inputfile.py: https://github.com/bkuz114/inputfile-parser
-- Version: 1.0.0+ (commit 8064a8b)
-  8064a8b feat: add parent back-references to FileRef, Chapter, and Part
-  https://github.com/bkuz114/inputfile-parser/commit/8064a8baa68c659c14829aaaa84c4d181fc072f5
+- Version: 2.0.0 (commit d9aa3e5)
+  https://github.com/bkuz114/inputfile-parser/commit/d9aa3e523601386d08037b92f7612d286c00d252
 - Original license: MIT
 - Files vendored:
   - inputfile.py
