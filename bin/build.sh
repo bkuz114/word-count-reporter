@@ -39,7 +39,7 @@ WHEEL_FILE="${DIST_DIR}/${WHEEL_NAME}"
 TARFILE_NAME="${PROJECT_NORMALIZED}-${VERSION}.tar.gz"
 
 # test md files
-TEST_FILES="${REPO_ROOT}/example_files"
+TEST_FILES="${REPO_ROOT}/examples"
 
 # virtual envs to use
 dev_venv="dev_env"
