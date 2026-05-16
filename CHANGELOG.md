@@ -5,25 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## UNRELEASED
+## [2.0.0] - 2026-05-16
 
 ### Changed
-- Replaced bespoke inputfile parser with vendored JSON parser (`inputfile-parser`)
-- Input file format is now JSON (see example_files/example_inputfile.json)
+- Replaced bespoke inputfile parser with vendored JSON parser (`inputfile-parser`) (13ba44f)
+- Input file format is now JSON (see example_files/example_inputfile.json) (13ba44f)
 - Multiple files per chapter are now supported
 - Backup filenames now derived from source file names (not chapter names)
+- Opening in browser now opt-in (via `--browser`; `--no-browser` removed) (6881974)
 
 ### Removed
-- Legacy `utils/inputfile.py` and its bespoke format
+- Legacy `utils/inputfile.py` and its bespoke format (13ba44f)
 - `parse_input_file()` function
 - `example_inputfile.txt` (legacy format)
 
 ### Added
-- Vendored `inputfile.py` from inputfile-parser v1.0.0
+- Vendored `inputfile.py` from inputfile-parser v2.0.0 (13ba44f)
 - `example_inputfile.json` (JSON format example)
 - `vendor/__init__.py` and `vendor/VENDORED.md`
 - Support for per-file custom display names
-- Support for .rtf, .md, and .markdown documents
+- Support for .rtf, .md, and .markdown documents (7acb821, d8f5a11)
+
+### Breaking Changes
+- Inputfiles now `.json` rather than `.txt` (13ba44f)
+- Opening in browser now opt-in via `--browser` rather than automatic. (6881974) 
 
 ## [1.0.0] - 2026-04-28
 
